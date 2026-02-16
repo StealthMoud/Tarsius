@@ -65,7 +65,7 @@ class ActiveScanner:
         for module_file in modules_directory.glob("mod_*.py"):
             try:
                 try:
-                    mod = import_module("tarsius.attack." + module_file.stem)
+                    mod = import_module("tarsius.attacks." + module_file.stem)
                 except ImportError as error:
                     logging.error("[!] Unable to import module %s: %s", module_file.stem, error)
                     continue
@@ -128,7 +128,7 @@ class ActiveScanner:
         async with AsyncCrawler.with_configuration(self.crawler_configuration) as crawler:
             for mod_name in modules:
                 try:
-                    mod = import_module("tarsius.attack.mod_" + mod_name)
+                    mod = import_module("tarsius.attacks.mod_" + mod_name)
                     class_name = module_to_class_name(mod_name)
                     class_instance = getattr(mod, class_name)(
                         crawler,

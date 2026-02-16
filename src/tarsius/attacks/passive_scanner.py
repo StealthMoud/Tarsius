@@ -26,7 +26,7 @@ class PassiveScanner:
             mod_name = module_file_name.stem
             try:
                 try:
-                    mod = import_module("tarsius.attack.modules.passive." + mod_name)
+                    mod = import_module("tarsius.attacks.modules.passive." + mod_name)
                 except ImportError as error:
                     logging.error("[!] Unable to import module %s: %s", mod_name, error)
                     continue

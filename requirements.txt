@@ -7,3 +7,5 @@ SQLAlchemy
 browser_cookie3
 playwright
 mitmproxy
+packaging
+dnspython

@@ -99,7 +99,7 @@ def handle_special_commands(args: Namespace):
         print("[*] Available modules:")
         for module_name in sorted(all_modules):
             try:
-                mod = import_module("tarsius.attack.mod_" + module_name)
+                mod = import_module("tarsius.attacks.mod_" + module_name)
                 class_name = module_to_class_name(module_name)
                 is_common = " (used by default)" if module_name in common_modules else ""
                 print(f"\t{module_name}{is_common}")
