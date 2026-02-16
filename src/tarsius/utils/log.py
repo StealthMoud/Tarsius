@@ -1,18 +1,19 @@
 import logging as std_logging
 import sys
 
-# --- Custom Log Levels ---
+
 VERBOSE_LEVEL = 15
 std_logging.addLevelName(VERBOSE_LEVEL, "VERBOSE")
 
 
-# Mapping from color names to ANSI codes
+# maping color names to ansi codes sory for the mess
 COLORS = {
     "BLUE": "\033[38;5;33m",
     "GREEN": "\033[38;5;34m",
     "ORANGE": "\033[38;5;202m",
     "YELLOW": "\033[38;5;226m",
-    "RED": "\033[38;5;196m",      # Bright red for critical findings
+    "RED": "\033[38;5;196m",      # briyht red for critical thngs
+    "CYAN": "\033[38;5;51m",
     "GRAY": "\033[38;5;250m",
     "ERROR_RED": "\033[48;5;196m",
     "CRITICAL_RED": "\033[48;5;196m",
@@ -22,7 +23,7 @@ COLORS = {
 
 class ColoredFormatter(std_logging.Formatter):
     """
-    Custom formatter to add colors to logs.
+    custom formater added for colors in the logs.
     """
 
     def __init__(self, fmt=None, datefmt=None, style='%', colorize=False):
@@ -30,20 +31,34 @@ class ColoredFormatter(std_logging.Formatter):
         self.colorize = colorize
 
     def format(self, record):
-        # The message is already formatted by the base class.
+        # we format the mesage here with colors from the base class
         message = super().format(record)
         if not self.colorize:
             return message
 
-        # Priority 1: Use the color specified in the log call `extra`
+        # adding visual prefixes for levels
+        prefixes = {
+            std_logging.INFO: "[*] ",
+            VERBOSE_LEVEL: "[V] ",
+            std_logging.WARNING: "[!] ",
+            std_logging.ERROR: "[!] ",
+            std_logging.CRITICAL: "[!!] ",
+        }
+        prefix = prefixes.get(record.levelno, "")
+        if prefix and not message.startswith("["):
+            message = prefix + message
+
+        # check if we have custom color from the log call
         color_name = getattr(record, 'color_name', None)
         if color_name and color_name in COLORS:
             return COLORS[color_name] + message + COLORS["ENDC"]
 
-        # Priority 2: Fall back to the color based on the log level
+        # use standard color based on the level
         level_color_map = {
+            VERBOSE_LEVEL: COLORS["GRAY"],
+            std_logging.INFO: COLORS["BLUE"],
             std_logging.WARNING: COLORS["ORANGE"],
-            std_logging.ERROR: COLORS["ERROR_RED"],
+            std_logging.ERROR: COLORS["RED"],
             std_logging.CRITICAL: COLORS["CRITICAL_RED"],
         }
         color = level_color_map.get(record.levelno)
@@ -53,13 +68,13 @@ class ColoredFormatter(std_logging.Formatter):
         return message
 
 
-# The main logger to be used across the application
+# main loger for the whole app
 logging = std_logging.getLogger("tarsius")
 
 
 def configure(handlers):
     """
-    Configures the root logger based on a list of handlers.
+    setup the root loger with handlers.
     """
     logging.handlers = []
     logging.setLevel(std_logging.DEBUG)
@@ -105,42 +120,41 @@ def log_green(message, *args, **kwargs):
 
 
 def log_red(message, *args, **kwargs):
-    """Logs a critical finding (INFO level, RED color)."""
+    """log crazy important findings in red."""
     if args:
         message = message.format(*args)
     logging.info(message, extra={'color_name': 'RED'}, **kwargs)
 
 
 def log_bold(message, *args, **kwargs):
-    """Logs a critical error message (CRITICAL level)."""
+    """log very bad server errors here."""
     if args:
         message = message.format(*args)
     logging.critical(message, **kwargs)
 
 
 def log_orange(message, *args, **kwargs):
-    """Logs a medium finding (INFO level, ORANGE color)."""
+    """log medium findings in orynge."""
     if args:
         message = message.format(*args)
     logging.info(message, extra={'color_name': 'ORANGE'}, **kwargs)
 
 
 def log_yellow(message, *args, **kwargs):
-    """Logs a low-finding (INFO level, YELLOW color)."""
+    """log smal finding in yelow."""
     if args:
         message = message.format(*args)
     logging.info(message, extra={'color_name': 'YELLOW'}, **kwargs)
 
 
 def log_verbose(message, *args, **kwargs):
-    """Logs a message with the custom VERBOSE level."""
+    """log verbose stuff."""
     if args:
         message = message.format(*args)
     logging.log(VERBOSE_LEVEL, message, extra={'color_name': 'GRAY'}, **kwargs)
 
 
-def log_severity(severity, message):
-    # This function doesn't use formatting, so it remains unchanged
+    # helper to log based on severity number
     if severity == 1:
         log_red(message)
     elif severity == 2:
@@ -151,9 +165,9 @@ def log_severity(severity, message):
         log_verbose(message)
 
 
-# Default configuration
+# default setup
 configure(handlers=[{
     "sink": sys.stdout,
-    "colorize": False,
+    "colorize": sys.stdout.isatty(),
     "level": "VERBOSE"
 }])

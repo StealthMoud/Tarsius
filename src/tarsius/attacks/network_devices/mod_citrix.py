@@ -17,7 +17,7 @@ MSG_CITRIX_DETECTED = "{0}{1} Detected !"
 
 
 class ModuleCitrix(Attack):
-    """Detect Citrix Devices."""
+    """find citricks boxes."""
 
     device_name = "Citrix"
     version = []
@@ -42,11 +42,11 @@ class ModuleCitrix(Attack):
     async def detect_citrix_product(self, response_content):
         soup = BeautifulSoup(response_content, 'html.parser')
         title_tag = soup.title
-        # If title tag exists and has a class attribute
+        # if title tag has class
         if title_tag:
             if 'class' in title_tag.attrs:
                 title_class = title_tag['class']
-                # Assuming class is a list, extracting the first class
+                # get the 1sr class
                 if title_class:
                     extract_pattern = r"^_ctxstxt_(.*)$"
                     match = re.search(extract_pattern, title_class[0])
@@ -58,18 +58,18 @@ class ModuleCitrix(Attack):
             else:
                 title = title_tag.text
                 if "Citrix" in title:
-                    # Extract the product name from the title
+                    # get prod name from title
                     self.device_name = title
                     return True
 
                 if "NetScaler" in title:
-                    # Search the product name in the content
+                    # look for prod name in content
                     matches = soup.find_all(
                         "span",
                         string=re.compile(r"^(NetScaler ADC|Citrix NetScaler|NetScaler|NetScaler AWS)$")
                     )
                     if matches:
-                        # Set product_name to the first matched product name
+                        # set prod name to what we found
                         self.device_name = matches[0].text
                     else:
                         self.device_name = "Citrix"

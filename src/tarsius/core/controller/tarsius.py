@@ -36,8 +36,7 @@ SCAN_FORCE_VALUES = {
 
 
 class Tarsius:
-    # parsing options and setting up the modules
-    # run with -h for help i guess
+    # parse options and set up modules
 
     REPORT_DIR = "report"
     HOME_DIR = os.getenv("HOME") or os.getenv("USERPROFILE") or "/home"
@@ -184,8 +183,7 @@ class Tarsius:
         await self.persister.set_root_url(self.base_request.url)
 
     async def save_scan_state(self):
-        log_blue("[*] Saving scan state, please wait...")
-        # Not yet scanned URLs are all saved in one single time (bulk insert + final commit)
+        # save urls that arent scanned yet in bulk
         await self.persister.set_to_browse(self._start_urls)
 
         log_green("This scan has been saved in the file {0}", self.persister.output_file)
@@ -194,7 +192,7 @@ class Tarsius:
 
     async def explore_and_save_requests(self, explorer):
         self._buffer = []
-        # Browse URLs are saved them once we have enough in our buffer
+        # brows urls and save when buffer gets big
         async for request, response in explorer.async_explore(self._start_urls, self._excluded_urls):
             self._buffer.append((request, response))
 
@@ -203,9 +201,10 @@ class Tarsius:
             if len(self._buffer) > 100:
                 await self.persister.save_requests(self._buffer)
                 self._buffer = []
+                log_blue(f"Discovery progress: {await self.count_resources()} URLs found...")
 
     async def browse(self, stop_event: asyncio.Event, parallelism: int = 8):
-        """Extract hyperlinks and forms from the webpages found on the website"""
+        """get links and forms from pages"""
         stop_event.clear()
 
         if self._mitm_proxy_port or self._headless_mode != "no":
@@ -250,9 +249,9 @@ class Tarsius:
 
         await self.persister.save_requests(self._buffer)
 
-        # Let's save explorer values (limits)
+        # save explorer state
         explorer.save_state(self.persister.output_file[:-2] + "pkl")
-        # Overwrite cookies for the next (attack) step
+        # swap cookis for next step
         self.crawler_configuration.cookies = explorer.cookie_jar
 
     async def write_report(self):
@@ -308,22 +307,22 @@ class Tarsius:
         await self.persister.close()
 
     def set_timeout(self, timeout: float = 10.0):
-        """Set the timeout for the time waiting for an HTTP response"""
+        """set how long to wait for http"""
         self.crawler_configuration.timeout = timeout
 
     def set_verify_ssl(self, verify: bool = False):
-        """Set whether SSL must be verified."""
+        """check ssl or not"""
         self.crawler_configuration.secure = verify
 
     def set_proxy(self, proxy: str):
-        """Set a proxy to use for HTTP requests."""
+        """use a proxy"""
         self._proxy = proxy
         self.crawler_configuration.proxy = proxy
         # Update mitm proxy settings
         self.set_intercepting_proxy_port(self._mitm_proxy_port)
 
     def set_intercepting_proxy_port(self, port: int):
-        """Set the listening port for the mitmproxy instance."""
+        """set port for mitm stuff"""
         if not port:
             return
 
@@ -337,7 +336,7 @@ class Tarsius:
                 )
 
     async def set_headless(self, headless_mode: str):
-        """Set the headless mode used for browsing"""
+        """set headless browser mode"""
         if headless_mode != "no":
             async with async_playwright() as p:
                 try:
@@ -361,15 +360,15 @@ class Tarsius:
         return self._headless_mode
 
     def set_wait_time(self, wait_time: float):
-        """Set the time to wait before processing a webpage content (headless mode only)"""
+        """how long to wait for page content"""
         self._wait_time = wait_time
 
     def add_start_url(self, request: Request):
-        """Specify a URL to start the scan with. Can be called several times."""
+        """add url to start the scan"""
         self._start_urls.append(request)
 
     def add_excluded_url(self, url_or_pattern: str):
-        """Specify a URL to exclude from the scan. Can be called several times."""
+        """add url to skip"""
         self._excluded_urls.append(url_or_pattern)
 
     @property
@@ -377,7 +376,7 @@ class Tarsius:
         return self._excluded_urls
 
     def set_cookie_file(self, cookie: str):
-        """Load session cookies from a cookie file"""
+        """get cookis from a file"""
         if os.path.isfile(cookie):
             json_cookie = jsoncookie.JsonCookie()
             json_cookie.load(cookie)
@@ -385,15 +384,14 @@ class Tarsius:
             self.crawler_configuration.cookies = cookiejar
 
     def load_browser_cookies(self, browser_name: str):
-        """Load session cookies from a browser"""
+        """get cookis from browser"""
         browser_name = browser_name.lower()
         if browser_name == "firefox":
             cookiejar = browser_cookie3.firefox()
             self.crawler_configuration.cookies = cookiejar
         elif browser_name == "chrome":
             cookiejar = browser_cookie3.chrome()
-            # There is a bug with version 0.11.4 of browser_cookie3 and we have to overwrite expiration date
-            # Upgrading to latest version gave more errors so let's keep an eye on future releases
+            # workaround for chrome cooky bug
             for cookie in cookiejar:
                 cookie.expires = None
             self.crawler_configuration.cookies = cookiejar
@@ -404,16 +402,15 @@ class Tarsius:
         self.crawler_configuration.drop_cookies = True
 
     def set_http_credentials(self, credentials: HttpCredential):
-        """Set credentials to use if the website require an authentication."""
+        """set login creds"""
         self.crawler_configuration.http_credential = credentials
 
     def add_bad_param(self, param_name: str):
-        """Exclude a parameter from a url (urls with this parameter will be
-        modified. This function can be call several times"""
+        """skip a param in urls"""
         self._bad_params.add(param_name)
 
     def set_max_depth(self, limit: int):
-        """Set how deep the scanner should explore the website"""
+        """set scan depth"""
         self._max_depth = limit
 
     def set_max_links_per_page(self, limit: int):
@@ -429,7 +426,7 @@ class Tarsius:
         self._max_scan_time = seconds
 
     def set_color(self):
-        """Put colors in the console output (terminal must support colors)"""
+        """use colors in console"""
         self.color_enabled = True
         self.refresh_logging()
 
@@ -439,7 +436,7 @@ class Tarsius:
         # 2 => verbose / level="VERBOSE"
 
     def verbosity(self, verbose: int):
-        """Define the level of verbosity of the output."""
+        """set verbosity level"""
         self.verbose = verbose
         self._active_scanner.set_verbosity(verbose)
         self.refresh_logging()
@@ -448,11 +445,11 @@ class Tarsius:
         # 2 => verbose / level="VERBOSE"
 
     def set_report_generator_type(self, report_type: str = "xml"):
-        """Set the format of the generated report. Can be HTML, JSON, TXT, MD or XML"""
+        """set report format (html, json, etc)"""
         self.report_generator_type = report_type
 
     def set_output_file(self, output_file: str):
-        """Set the filename where the report will be written"""
+        """set where to save report"""
         self.output_file = output_file
 
     def add_custom_header(self, key: str, value: str):

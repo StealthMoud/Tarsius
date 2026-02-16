@@ -23,18 +23,14 @@ def get_random_string_payload(_: Request, __: Parameter) -> Iterator[PayloadInfo
 
 
 class ModuleXss(Attack):
-    """Detects stored (aka permanent) Cross-Site Scripting vulnerabilities on the web server."""
+    """find permanant xss vulns on the server."""
 
     name = "xss"
     parallelize_attacks = True
 
-    # two dict exported for permanent XSS scanning
-    # GET_XSS structure :
-    # {uniq_code : http://url/?param1=value1&param2=uniq_code&param3..., next_uniq_code : ...}
-    # GET_XSS = {}
-    # POST XSS structure :
-    # {uniq_code: [target_url, {param1: val1, param2: uniq_code, param3:...}, referer_ul], next_uniq_code : [...]...}
-    # POST_XSS = {}
+    # dicts for permanent xss scaning
+    # get_xss structure : {uniq_code : http://url/?param1=value1...}
+    # post_xss structure : {uniq_code: [target_url, params, referer]}
     tried_xss: Dict[str, Tuple[Request, Parameter]] = {}
     PHP_SELF = []
 
@@ -68,23 +64,20 @@ class ModuleXss(Attack):
                 request,
                 get_random_string_payload
         ):
-            # We don't display the mutated request here as the payload is not interesting
+            # not displaying this since payload isnt cool yet
             try:
                 response = await self.crawler.async_send(mutated_request)
             except RequestError:
                 self.network_errors += 1
-                # We just inserted harmless characters, if we get a timeout here, it's not interesting
+                # harmless chars so timeout is boring
                 continue
             else:
-                # We keep a history of taint values we sent because in case of stored value, the taint code
-                # may be found in another webpage by the permanentxss module.
+                # keep track of taint values for later scaning
                 self.tried_xss[payload_info.payload] = (request, parameter)
 
-                # Reminder: valid_xss_content_type is not called before before content is not necessary
-                # reflected here, may be found in another webpage so we have to inject tainted values
-                # even if the Content-Type seems uninteresting.
+                # need to inject even if content type looks weird for now
                 if payload_info.payload.lower() in response.content.lower() and valid_xss_content_type(response):
-                    # Simple text injection worked in HTML response, let's try with JS code
+                    # text injection worked so try js now
                     payloads = generate_payloads(
                         response.content,
                         payload_info.payload,
@@ -101,7 +94,6 @@ class ModuleXss(Attack):
 
                     await self.attempt_exploit(method, payloads, request, parameter.name, payload_info.payload)
 
-    # pylint: disable=too-many-positional-arguments
     async def attempt_exploit(
             self, method: str, payloads: List[PayloadInfo], original_request: Request, parameter: str, taint: str
     ):
@@ -198,7 +190,7 @@ class ModuleXss(Attack):
                     log_red(http_repr(evil_request))
                     log_red("---")
 
-                    # stop trying payloads and jump to the next parameter
+                    # got it, skip other payloads for this param
                     break
 
                 if response.is_server_error and not saw_internal_error:

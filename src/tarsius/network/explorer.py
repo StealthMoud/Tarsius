@@ -7,10 +7,10 @@ from urllib.parse import urlparse
 import re
 from http.cookiejar import CookieJar
 
-# Third-parties
+# othr parties
 import httpx
 
-# Internal libraries
+# local stuf
 from tarsius.network import web
 
 from tarsius.network.response import Response
@@ -24,7 +24,7 @@ from tarsius.network import jsparser_angular
 from tarsius.network.scope import Scope, wildcard_translate
 
 MIME_TEXT_TYPES = ('text/', 'application/xml')
-# Limit page size to 2MB
+# page size limit to avoid crash
 MAX_PAGE_SIZE = 2097152
 
 COMMON_PAGE_EXTENSIONS = {
@@ -34,7 +34,7 @@ COMMON_PAGE_EXTENSIONS = {
 }
 
 EXCLUDED_MEDIA_EXTENSIONS = (
-    # File extensions we don't want to deal with. Js files won't be in this list.
+    # files to skip. js is ok.
     '.7z', '.aac', '.aiff', '.au', '.avi', '.bin', '.bmp', '.cab', '.dll', '.dmp', '.ear', '.exe', '.flv', '.gif',
     '.gz', '.ico', '.image', '.iso', '.jar', '.jpeg', '.jpg', '.mkv', '.mov', '.mp3', '.mp4', '.mpeg', '.mpg', '.pdf',
     '.png', '.ps', '.rar', '.scm', '.so', '.swf', '.tar', '.tif', '.war', '.wav', '.wmv', '.zip'
@@ -65,16 +65,15 @@ class Explorer:
         self._processed_requests = []
         self._cookiejar = CookieJar()
 
-        # Locking required for writing to the following structures
         self._file_counts = defaultdict(int)
         self._pattern_counts = defaultdict(int)
         self._custom_404_codes = {}
-        # Corresponding lock
+        # lock for async safety
         self._shared_lock = asyncio.Lock()
 
-        # Semaphore used to limit parallelism
+        # sem to limit parallelism
         self._sem = asyncio.Semaphore(parallelism)
-        # Event to stop processing tasks
+        # stop event
         self._stopped = stop_event
 
         self._max_tasks = min(parallelism, 32)
@@ -163,8 +162,7 @@ class Explorer:
                     ] >= 220 / (math.exp(request.parameters_count * self._qs_limit) ** 2):
                         return True
                 except OverflowError:
-                    # Oh boy... that's not good to try to attack a form with more than 600 input fields
-                    # but I guess insane mode can do it as it is insane
+                    # way to many params...
                     return True
         return False
 
@@ -188,13 +186,12 @@ class Explorer:
 
             for extra_url in self._scope.filter(html.extra_urls):
                 parts = urlparse(extra_url)
-                # There are often css and js URLs with useless parameters like version or random number
-                # used to prevent caching in browser. So let's exclude those extensions
+                # skip css and js with random params
                 if parts.path.endswith(".css"):
                     continue
 
                 if parts.path.endswith(".js") and parts.query:
-                    # For JS script, allow to process them but remove parameters
+                    # strip params for js
                     allowed_links.append(extra_url.split("?")[0])
                     continue
 
@@ -202,7 +199,6 @@ class Explorer:
 
             for form in html.iter_forms():
                 for form_request in form.to_requests():
-                    # TODO: apply bad_params filtering in form URLs
                     if self._scope.check(form_request):
                         if form_request.hostname not in self._hostnames:
                             form_request.link_depth = 0
@@ -232,7 +228,6 @@ class Explorer:
 
             if "?" in new_url:
                 path, query_string = new_url.split("?", 1)
-                # TODO: encoding parameter ?
                 get_params = [
                     list(t) for t in filter(
                         lambda param_tuple: param_tuple[0] not in self._bad_params,
@@ -240,7 +235,7 @@ class Explorer:
                     )
                 ]
             elif new_url.endswith(EXCLUDED_MEDIA_EXTENSIONS):
-                # exclude static media files
+                # skip statics
                 continue
             else:
                 path = new_url
@@ -257,23 +252,11 @@ class Explorer:
 
     async def _async_analyze(self, request) -> Tuple[bool, List, Optional[Response]]:
         async with self._sem:
-            self._processed_requests.append(request)  # thread safe
+            self._processed_requests.append(request)  # safe
 
             log_verbose(f"[+] {request}")
 
             dir_name = request.dir_name
-            # Currently not exploited. Would be interesting though but then it should be implemented separately
-            # Maybe in another task as we don't want to spend to much time in this function
-            # async with self._shared_lock:
-            #     # lock to prevent launching duplicates requests that would otherwise waste time
-            #     if dir_name not in self._custom_404_codes:
-            #         invalid_page = "zqxj{0}.html".format("".join([choice(ascii_letters) for __ in range(10)]))
-            #         invalid_resource = web.Request(dir_name + invalid_page)
-            #         try:
-            #             page = await self._crawler.async_get(invalid_resource)
-            #             self._custom_404_codes[dir_name] = page.status
-            #         except httpx.RequestError:
-            #             pass
 
             self._hostnames.add(request.hostname)
 
@@ -281,8 +264,7 @@ class Explorer:
 
             try:
                 response: Response = await self._crawler.async_send(request, stream=True)
-            except (TypeError, UnicodeDecodeError) as exception:
-                logging.debug("%s with URL %s", exception, resource_url)  # debug
+                logging.debug("%s with URL %s", exception, resource_url)  # dbug
                 return False, [], None
             except (ConnectionError, httpx.RequestError) as error:
                 logging.error("[!] %s with URL %s", error.__class__.__name__, resource_url)
@@ -296,24 +278,23 @@ class Explorer:
                 async with self._shared_lock:
                     self._pattern_counts[request.pattern] += 1
 
-            # Above this line we need the content of the page. As we are in stream mode, we must force reading the body.
+            # force read body for stream
             try:
                 await response.read()
             finally:
                 await response.close()
 
             if request.link_depth == self._max_depth:
-                # We are at the edge of the depth, so next links will have depth + 1 so to need to parse the page.
+                # stop at max depth
                 return True, [], response
 
-            # Sur les ressources statiques le content-length est généralement indiqué
+            # check for huge pages
             if self._max_page_size > 0:
                 if response.raw_size > self._max_page_size:
                     return False, [], response
 
             await asyncio.sleep(0)
             resources = self.extract_links(response, request)
-            # TODO: there's more situations where we would not want to attack the resource... must check this
 
             return True, resources, response
 
@@ -344,9 +325,7 @@ class Explorer:
         task_to_request = {}
         while True:
             while to_explore:
-                # Concurrent tasks are limited through the use of the semaphore, BUT we don't want the to_explore
-                # queue to be empty everytime (as we may need to extract remaining URLs) and overload the event loop
-                # with pending tasks.
+                # limit task concurency
                 if len(task_to_request) > self._max_tasks:
                     break
 
@@ -365,7 +344,7 @@ class Explorer:
                 if self._max_files_per_dir and self._file_counts[dir_name] >= self._max_files_per_dir:
                     continue
 
-                # Won't enter if qs_limit is 0 (aka insane mode)
+                # insane mode
                 if self.has_too_many_parameters(request):
                     continue
 
@@ -384,7 +363,7 @@ class Explorer:
             else:
                 done = []
 
-            # process any completed task
+            # check done tasks
             for task in done:
                 request = task_to_request[task]
                 try:
@@ -401,7 +380,7 @@ class Explorer:
                     accepted_urls = 0
                     for unfiltered_request in resources:
                         if BAD_URL_REGEX.search(unfiltered_request.file_path):
-                            # Malformed link due to HTML issues
+                            # bad link found
                             continue
 
                         if not self._scope.check(unfiltered_request):
@@ -414,7 +393,7 @@ class Explorer:
                             to_explore.append(unfiltered_request)
                             accepted_urls += 1
 
-                # remove the now completed task
+                # cleanup
                 del task_to_request[task]
 
             if not task_to_request and (self._stopped.is_set() or not to_explore):

@@ -25,7 +25,7 @@ class PayloadInfo:
     section: bool
 
 
-# From https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/errors.xml
+# regex for dbms errors
 DBMS_ERROR_PATTERNS = {
     "MySQL": [
         re.compile(r"SQL syntax.*?MySQL"),
@@ -232,14 +232,13 @@ DBMS_ERROR_PATTERNS = {
 
 
 def generate_boolean_payloads(_: Request, __: Parameter) -> Iterator[PayloadInfo]:
-    # payloads = []
     for use_parenthesis in (False, True):
         for separator in ("", "'", "\""):
             yield from generate_boolean_test_values(separator, use_parenthesis)
-    # return payloads
 
 
 def generate_boolean_test_values(separator: str, parenthesis: bool) -> Iterator[PayloadInfo]:
+    # helper for blind sql inject values
     fmt_string = (
         "[VALUE]{sep} AND {left_value}={right_value} AND {sep}{padding_value}{sep}={sep}{padding_value}",
         "[VALUE]{sep}) AND {left_value}={right_value} AND ({sep}{padding_value}{sep}={sep}{padding_value}"
@@ -250,7 +249,7 @@ def generate_boolean_test_values(separator: str, parenthesis: bool) -> Iterator[
         value2 = randint(10, 99) + value1
         padding_value = randint(10, 99)
 
-        # First two payloads give negative tests
+        # first two are for negative tests
         yield PayloadInfo(
             payload=fmt_string.format(
                 left_value=value1,
@@ -266,7 +265,7 @@ def generate_boolean_test_values(separator: str, parenthesis: bool) -> Iterator[
         value1 = randint(10, 99)
         padding_value = randint(10, 99)
 
-        # Last two payloads give positive tests
+        # last two are for positive tests
         yield PayloadInfo(
             payload=fmt_string.format(
                 left_value=value1,
@@ -280,13 +279,13 @@ def generate_boolean_test_values(separator: str, parenthesis: bool) -> Iterator[
 
 
 def find_pattern_in_response(data):
-    # Check for SQL DBMS specific patterns
+    # look for specific dbms errors
     for dbms, regex_list in DBMS_ERROR_PATTERNS.items():
         for regex in regex_list:
             if regex.search(data):
                 return f"SQL Injection (DBMS: {dbms})"
 
-    # Define a mapping of patterns to their corresponding injection types
+    # map patterns to vuln names
     pattern_to_injection = {
         "Unclosed quotation mark after the character string": ".NET SQL Injection",
         "StatementCallback; bad SQL grammar": "Spring JDBC Injection",
@@ -295,23 +294,20 @@ def find_pattern_in_response(data):
         "Error parsing XPath": "XPath Injection"
     }
 
-    # Check for each pattern
+    # search for patterns
     for pattern, injection_type in pattern_to_injection.items():
         if pattern in data:
             return injection_type
 
-    # Default return
     return ""
 
 
 class ModuleSql(Attack):
-    """
-    Detect SQL (also XPath) injection vulnerabilities using error-based or boolean-based (blind) techniques.
-    """
+    """find sql inject and xpath too using errors or blind tests."""
     time_to_sleep = 6
     name = "sql"
     payloads = ["[VALUE]\xBF'\"("]
-    filename_payload = "'\"("  # TODO: wait for https://github.com/shazow/urllib3/pull/856 then use that for files upld
+    filename_payload = "'\"("
     parallelize_attacks = True
 
     def __init__(self, crawler, persister, attack_options, crawler_configuration):
@@ -345,11 +341,11 @@ class ModuleSql(Attack):
                 str_to_payloadinfo(self.payloads),
         ):
             if current_parameter != parameter:
-                # Forget what we know about current parameter
+                # reset for new param
                 current_parameter = parameter
                 vulnerable_parameter = False
             elif vulnerable_parameter:
-                # If parameter is vulnerable, just skip till next parameter
+                # skip if we found a vuln here
                 continue
 
             log_verbose(f"[¨] {mutated_request}")
@@ -361,7 +357,7 @@ class ModuleSql(Attack):
             else:
                 vuln_info = find_pattern_in_response(response.content)
                 if vuln_info and not await self.is_false_positive(request):
-                    # An error message implies that a vulnerability may exist
+                    # error found so might be a vuln
                     if parameter.is_qs_injection:
                         vuln_message = Messages.MSG_QS_INJECT.format(vuln_info, page)
                     else:
@@ -386,7 +382,7 @@ class ModuleSql(Attack):
                     log_red(http_repr(mutated_request))
                     log_red("---")
 
-                    # We reached maximum exploitation for this parameter, don't send more payloads
+                    # we found it so stop for this param
                     vulnerable_parameter = True
                     vulnerable_parameters.add(parameter.display_name)
 
@@ -419,7 +415,6 @@ class ModuleSql(Attack):
             good_response = await self.crawler.async_send(request)
             good_status = good_response.status
             good_redirect = good_response.redirection_url
-            # good_title = response.title
             html = Html(good_response.content, request.url)
             good_hash = html.text_only_md5
         except ReadTimeout:
@@ -452,11 +447,11 @@ class ModuleSql(Attack):
 
         for mutated_request, parameter, payload_info in mutator.mutate(request, generate_boolean_payloads):
 
-            # Make sure we always pass through the following block to see changes of payloads formats
+            # check if payload format changed
             if current_session != payload_info.platform:
-                # We start a new set of payloads, let's analyse results for previous ones
+                # look at results for previous payloads
                 if test_results and all(test_results):
-                    # We got a winner
+                    # found a vuln
                     skip_till_next_parameter = True
                     vuln_info = "SQL Injection"
 
@@ -484,12 +479,12 @@ class ModuleSql(Attack):
                     log_red(http_repr(last_mutated_request))
                     log_red("---")
 
-                # Don't forget to reset session and results
+                # reset results
                 current_session = payload_info.platform
                 test_results = []
 
             if current_parameter != parameter:
-                # Start attacking a new parameter, forget every state we kept
+                # new param so clear state
                 current_parameter = parameter
                 skip_till_next_parameter = False
             elif skip_till_next_parameter:
@@ -497,7 +492,7 @@ class ModuleSql(Attack):
                 continue
 
             if test_results and not all(test_results):
-                # No need to go further: one of the tests was wrong
+                # stop if test failed
                 continue
 
             log_verbose(f"[¨] {mutated_request}")
@@ -506,7 +501,7 @@ class ModuleSql(Attack):
                 response = await self.crawler.async_send(mutated_request)
             except RequestError:
                 self.network_errors += 1
-                # We need all cases to make sure SQLi is there
+                # need all tests to pass for blind sql
                 test_results.append(False)
                 continue
 

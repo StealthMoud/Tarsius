@@ -46,7 +46,7 @@ def activate_method_module(module: AttackProtocol, method: str, status: bool):
 
 class ActiveScanner:
     def __init__(self, persister, crawler_configuration, verbosity: int = 1):
-        # Initialize the scanner object with persister and configuration
+        # init scanner with persister and config
         self.persister = persister
         self.attack_options = {}
         self.crawler_configuration = crawler_configuration
@@ -74,14 +74,14 @@ class ActiveScanner:
                 class_ = getattr(mod, class_name)
                 modules[module_file.stem] = class_
             except Exception:  # pylint: disable=broad-except
-                # Catch every possible exception and print it
+                # catch everythng and print it
                 logging.exception("[!] Module %s seems broken and will be skipped", module_file.stem)
                 continue
 
         return modules
 
     def set_modules(self, options: ModuleActivationSettings):
-        """Activate or deactivate (default) all attacks"""
+        """turn on or off the attacks"""
         self._activated_modules = options
 
     def set_attack_options(self, options: dict = None):
@@ -109,8 +109,6 @@ class ActiveScanner:
                     self.attack_options,
                     self.crawler_configuration,
                 )
-            except Exception:  # pylint: disable=broad-except
-                # Catch every possible exception and print it
                 logging.exception("[!] Module %s seems broken and will be skipped", mod_name)
                 continue
 
@@ -126,7 +124,6 @@ class ActiveScanner:
         modules = all_modules if (not requested_modules or requested_modules == "all") else requested_modules.split(",")
 
         async with AsyncCrawler.with_configuration(self.crawler_configuration) as crawler:
-            for mod_name in modules:
                 try:
                     mod = import_module("tarsius.attacks.mod_" + mod_name)
                     class_name = module_to_class_name(mod_name)
@@ -148,25 +145,12 @@ class ActiveScanner:
                 except ImportError:
                     continue
                 except Exception:  # pylint: disable=broad-except
-                    # Catch every possible exception and print it
+                    # catch exceptions and skip broken module
                     logging.exception("[!] Module %s seems broken and will be skipped", mod_name)
                     continue
 
     async def load_resources_for_module(self, module: Attack) -> AsyncIterator[Tuple[Request, Response]]:
-        """
-        Load resources for a given attack module by yielding requests and responses.
-
-        This function asynchronously yields pairs of requests and responses for the specified
-        attack module. It retrieves GET resources if `module.do_get` is True, and POST resources
-        if `module.do_post` is True. These resources are fetched from the persister, which stores
-        the crawled data.
-
-        Args:
-            module (Attack): The attack module for which resources are to be loaded.
-
-        Yields:
-            AsyncIterator[Tuple[Request, Response]]: An asynchronous iterator of request-response pairs.
-        """
+        """load resouces from sqlite for the module."""
         if module.do_get:
             async for request, response in self.persister.get_links(attack_module=module.name):
                 yield request, response
@@ -204,13 +188,27 @@ class ActiveScanner:
             else:
                 if request.path_id is not None:
                     attacked_ids.add(request.path_id)
+                return True
 
     async def load_and_attack(self, attack_module: Attack, attacked_ids: Set[int]) -> None:
         parallel_tasks_count = self.attack_options.get("tasks", 10)
+        
+        # pre-count resouces for the progres trackerr
+        total_resources = 0
+        if attack_module.do_get:
+            total_resources += await self.persister.count_links(attack_module=attack_module.name)
+        if attack_module.do_post:
+            total_resources += await self.persister.count_forms(attack_module=attack_module.name)
+            
+        current_resource = 0
+
         if attack_module.parallelize_attacks and parallel_tasks_count > 1:
             tasks = []
             semaphore = asyncio.Semaphore(parallel_tasks_count)
             async for original_request, original_response in self.load_resources_for_module(attack_module):
+                current_resource += 1
+                if self.verbosity > 0:
+                    logging.info("[%s/%s] %s", current_resource, total_resources, original_request)
                 tasks.append(
                     self._attack_wrapper(
                         attack_module,
@@ -225,15 +223,16 @@ class ActiveScanner:
             original_request: Request
             original_response: Response
             async for original_request, original_response in self.load_resources_for_module(attack_module):
+                current_resource += 1
                 try:
                     if await attack_module.must_attack(original_request, original_response):
                         if self.verbosity > 0:
-                            logging.info("[+] %s", original_request)
+                            logging.info("[%s/%s] %s", current_resource, total_resources, original_request)
 
                         await attack_module.attack(original_request, original_response)
 
                 except RequestError:
-                    # Hmm, it should be caught inside the module
+                    # hold all the mod_ classes
                     await asyncio.sleep(1)
                     continue
                 except Exception as exception:  # pylint: disable=broad-except
@@ -266,15 +265,14 @@ class ActiveScanner:
             try:
                 self._user_choice = UserChoice(input("? ").strip().lower())
                 if self._user_choice != UserChoice.CONTINUE:
-                    if self._current_attack_task is not None:
                         self._current_attack_task.cancel()
                 return
             except (UnicodeDecodeError, ValueError):
                 print("Invalid choice. Valid choices are r, n, q, and c.")
 
-    async def run_attack_module(self, attack_module):
-        """Run a single attack module, handling persistence and timeouts."""
-        log_yellow(f"[*] Launching module {attack_module.name}")
+    async def run_attack_module(self, attack_module, module_index: int = 1, total_modules: int = 1):
+        """run a single attack moddle, handlng persistence and timouts."""
+        log_yellow(f"[*] [Module {module_index}/{total_modules}] Launching {attack_module.name}...")
 
         already_attacked = await self.persister.count_attacked(attack_module.name)
         if already_attacked:
@@ -339,8 +337,9 @@ class ActiveScanner:
                     )
 
                 # Create and run each attack module as an asyncio task
+                module_index = attack_modules.index(attack_module) + 1
                 self._current_attack_task = asyncio.create_task(
-                    self.run_attack_module(attack_module)
+                    self.run_attack_module(attack_module, module_index, len(attack_modules))
                 )
 
                 # Setup signal handler to prompt the user for task cancellation

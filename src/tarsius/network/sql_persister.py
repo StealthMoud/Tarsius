@@ -1,20 +1,3 @@
-# This file is part of the Tarsius project (https://tarsius-scanner.github.io)
-# Copyright (C) 2017-2023 Nicolas Surribas
-# Copyright (C) 2021-2024 Cyberwatch
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 import json
 import os
 from collections import namedtuple
@@ -33,8 +16,8 @@ Payload = namedtuple("Payload", "evil_request,category,level,parameter,info,type
 
 
 class SqlPersister:
-    """This class makes the persistence tasks for persisting the crawler parameters
-    in other to can continue the process in the future.
+    """this class dose the persistence tasks to keep the crwler parameters
+    so we can continue the scan latr if it stops.
     """
 
     CRAWLER_DATA_DIR_NAME = "scans"
@@ -66,11 +49,11 @@ class SqlPersister:
     DEPTH = "depth"
 
     def __init__(self, output_file: str, table_prefix: str = ""):
-        # toBrowse can contain GET and POST resources
+        # to_brows can have get and post stuff
         self.to_browse = []
-        # browsed contains only GET resources
+        # links that were browsed already
         self.browsed_links = []
-        # forms contains only POST resources
+        # forms that were browsed with post
         self.browsed_forms = []
         self.uploads = []
         self.headers = {}
@@ -107,13 +90,13 @@ class SqlPersister:
         self.paths = Table(
             f"{table_prefix}paths", self.metadata,
             Column("path_id", Integer, primary_key=True),
-            Column("path", Text, nullable=False),  # URL, can be huge
-            Column("method", String(length=16), nullable=False),  # HTTP method
-            Column("enctype", String(length=255), nullable=False),  # HTTP request encoding (like multipart...)
+            Column("path", Text, nullable=False),  # url can be rly big
+            Column("method", String(length=16), nullable=False),  # hhtp method
+            Column("enctype", String(length=255), nullable=False),  # reqwest encoding like multipart
             Column("depth", Integer, nullable=False),
-            Column("encoding", String(length=255)),  # page encoding (like UTF-8...)
-            Column("headers", PickleType),  # Pickled sent HTTP headers, can be huge
-            Column("referer", Text),  # Another URL so potentially huge
+            Column("encoding", String(length=255)),  # page encodng like utf-8
+            Column("headers", PickleType),  # pickled headers might be huge
+            Column("referer", Text),  # referer url
             Column("evil", Boolean, nullable=False),
             Column("response_id", None, ForeignKey(f"{table_prefix}responses.response_id"), nullable=True),
         )
@@ -134,13 +117,13 @@ class SqlPersister:
             f"{table_prefix}payloads", self.metadata,
             Column("evil_path_id", None, ForeignKey(f"{table_prefix}paths.path_id"), nullable=False),
             Column("module", String(255), nullable=False),
-            Column("category", String(255), nullable=False),  # Vulnerability category, should not be that long
+            Column("category", String(255), nullable=False),  # vuln kind
             Column("level", Integer, nullable=False),
-            Column("parameter", Text),  # Vulnerable parameter, can be huge
+            Column("parameter", Text),  # param that is vuln
             Column("info", Text, nullable=False),
-            # Vulnerability description. If it contains the parameter name then huge.
-            Column("type", String(255), nullable=False),  # Something like additional/anomaly/vulnerability
-            Column("wstg", String(255), nullable=False),  # Something like additional/anomaly/vulnerability
+            # vuln description
+            Column("type", String(255), nullable=False),  # vulnearbility or anomaly
+            Column("wstg", String(255), nullable=False),  # wstg code
             Column("response_id", None, ForeignKey(f"{table_prefix}responses.response_id"), nullable=True)
         )
 
@@ -153,10 +136,10 @@ class SqlPersister:
         self.responses = Table(
             f"{table_prefix}responses", self.metadata,
             Column("response_id", Integer, primary_key=True),
-            Column("url", Text, nullable=False),  # URL, can be huge
-            Column("status_code", Integer, nullable=False),  # HTTP status code
-            Column("headers", PickleType),  # Pickled HTTP headers, can be huge
-            Column("body", LargeBinary, nullable=False)  # base64 body
+            Column("url", Text, nullable=False),  # url is potentially big
+            Column("status_code", Integer, nullable=False),  # hhtp status code
+            Column("headers", PickleType),  # pickled headers
+            Column("body", LargeBinary, nullable=False)  # body in b64
         )
 
     async def create(self):
@@ -198,7 +181,7 @@ class SqlPersister:
             return
 
         if len(paths_list) == 1:
-            # Save the unique request and response objects
+            # save single req and resp objects
             await self.save_request(paths_list[0][0], paths_list[0][1])
             return
 
@@ -213,7 +196,7 @@ class SqlPersister:
                 headers_to_save = http_resource.sent_headers or http_resource.headers
 
                 if http_resource.path_id:
-                    # Request was already saved but not fetched, just update to set HTTP code and headers
+                    # req was saved but not fetched yet, update it
                     statement = self.paths.update().where(
                         self.paths.c.path_id == http_resource.path_id
                     ).values(
@@ -224,8 +207,8 @@ class SqlPersister:
                     continue
 
                 if bigest_id == 0:
-                    # This is a trick to be able to insert all paths and params in bulk
-                    # instead of inserting path and get the new returned ID to then insert params
+                    # trick to bulk insert all paths and params
+                    # instead of geting id one by one
                     result = await conn.execute(select(sql_max(self.paths.c.path_id)))
                     result = result.scalar()
                     if result is not None:
@@ -233,7 +216,7 @@ class SqlPersister:
 
                 bigest_id += 1
 
-                # Save the request along with its parameters
+                # save req with its params
                 # Beware: https://docs.sqlalchemy.org/en/14/core/tutorial.html#executing-multiple-statements
                 # When executing multiple sets of parameters, each dictionary must have the same set of keys;
                 # i.e. you can't have fewer keys in some dictionaries than others.
@@ -295,8 +278,8 @@ class SqlPersister:
                     )
 
                 for i, (file_param_key, file_param_value) in enumerate(http_resource.file_params):
-                    # file_param_value will be something like ['pix.gif', 'GIF89a', 'image/gif']
-                    # just keep the file name
+                    # file_param_value is like ['pix.gif', 'GIF89a', 'image/gif']
+                    # only keep file name part
                     if len(file_param_value) == 3:
                         meta = file_param_value[2]
                     else:
@@ -350,7 +333,7 @@ class SqlPersister:
                 await conn.execute(statement)
                 return
 
-            # as we have a unique request let's do insertion the classic way
+            # unique req so we do clasic insert
             statement = self.paths.insert().values(
                 path=http_resource.path,
                 method=http_resource.method,
@@ -408,8 +391,8 @@ class SqlPersister:
                 )
 
             for i, (file_param_key, file_param_value) in enumerate(http_resource.file_params):
-                # file_param_value will be something like ['pix.gif', 'GIF89a', 'image/gif']
-                # just keep the file name
+                # param vlaue is like ['pix.gif', 'GIF89a', 'image/gif']
+                # only keep file nam part
                 if len(file_param_value) == 3:
                     meta = file_param_value[2]
                 else:
@@ -442,7 +425,7 @@ class SqlPersister:
             conditions.append(self.paths.c.method == method)
 
         if crawled:
-            # Bellow is sqlalchemy syntax, do not replace the comparison
+            # bellow is sqlalchmey syntax keep compare
             # pylint: disable=singleton-comparison
             conditions.append(self.paths.c.response_id.is_not(None))
         else:
@@ -456,7 +439,7 @@ class SqlPersister:
             response_id = row[9]
 
             if module:
-                # Exclude requests matching the attack module, we want requests that aren't attacked yet
+                # skip reqs that match the attak module, we want fresh ones
                 statement = select(self.attack_logs).where(
                     self.attack_logs.c.path_id == path_id,
                     self.attack_logs.c.module == module
@@ -486,7 +469,7 @@ class SqlPersister:
                         get_params.append([name, value1])
                     elif param_row[0] == "POST":
                         if name == "__RAW__" and not post_params:
-                            # First POST parameter is __RAW__, it should mean that we have raw content
+                            # 1st post param is raw content
                             post_params = value1
                         elif isinstance(post_params, list):
                             post_params.append([name, value1])
@@ -579,8 +562,8 @@ class SqlPersister:
             return result.fetchone()[0]
 
     async def has_scan_finished(self) -> bool:
-        # If we have a path without a response id set then the scan is not finished
-        # Bellow is sqlalchemy syntax, do not replace the comparison
+        # if path has no response id then scan isnt done
+        # bellow is sqlalchmey syntax keep compare
         # pylint: disable=singleton-comparison
         statement = select(self.paths.c.path_id).where(self.paths.c.response_id.is_(None)).limit(1)
         async with self._engine.begin() as conn:
@@ -608,6 +591,30 @@ class SqlPersister:
 
             return False
 
+    async def _count_paths(self, method: str, attack_module: str = "") -> int:
+        conditions = [
+            self.paths.c.evil == False,
+            self.paths.c.method == method,
+            self.paths.c.response_id.is_not(None)
+        ]
+        
+        statement = select(sql_count(self.paths.c.path_id)).where(and_(*conditions))
+        
+        if attack_module:
+            statement = statement.where(~self.paths.c.path_id.in_(
+                select(self.attack_logs.c.path_id).where(self.attack_logs.c.module == attack_module)
+            ))
+            
+        async with self._engine.begin() as conn:
+            result = await conn.execute(statement)
+            return result.scalar()
+
+    async def count_links(self, attack_module: str = "") -> int:
+        return await self._count_paths("GET", attack_module)
+
+    async def count_forms(self, attack_module: str = "") -> int:
+        return await self._count_paths("POST", attack_module)
+
     # pylint: disable=too-many-positional-arguments
     async def add_payload(
             self,
@@ -625,7 +632,7 @@ class SqlPersister:
         response_id = await self.save_response(response)
 
         headers_to_save = request.sent_headers or request.headers
-        # Save the request along with its parameters
+        # save the req with its params
         statement = self.paths.insert().values(
             path=request.path,
             method=request.method,
@@ -638,8 +645,8 @@ class SqlPersister:
             evil=True,
         )
         async with self._engine.begin() as conn:
-            result = await conn.execute(statement)
-        # path_id is the ID of the evil path
+            await conn.execute(statement)
+        # path_id is the id of the evil pth
         path_id = result.inserted_primary_key[0]
 
         all_values = []
@@ -704,7 +711,7 @@ class SqlPersister:
             async with self._engine.begin() as conn:
                 await conn.execute(self.params.insert(), all_values)
 
-        # request_id is the ID of the original (legit) request
+        # request_id is id of the origin legit request
         statement = self.payloads.insert().values(
             evil_path_id=path_id,
             module=module,
@@ -735,7 +742,7 @@ class SqlPersister:
 
         headers = row.headers
         if "content-encoding" in headers:
-            # httpx will try to decompress the content if it sees the following header, leading to an exception
+            # httpx will try to decompress and fail if it sees this header
             del headers["content-encoding"]
 
         response = Response(
@@ -777,7 +784,7 @@ class SqlPersister:
                     get_params.append([name, value1])
                 elif param_row[0] == "POST":
                     if name == "__RAW__" and not post_params:
-                        # First POST parameter is __RAW__, it should mean that we have raw content
+                        # 1st post param is raw stuff
                         post_params = value1
                     elif isinstance(post_params, list):
                         post_params.append([name, value1])
@@ -836,16 +843,16 @@ class SqlPersister:
 
     async def flush_attacks(self):
         async with self._engine.begin() as conn:
-            await conn.execute(self.attack_logs.delete())  # which module was launched on which URL
-            await conn.execute(self.payloads.delete())  # information on vulnerabilities and anomalies
-            # Bellow is sqlalchemy syntax, do not replace the comparison
+            await conn.execute(self.attack_logs.delete())  # which mod launched on which url
+            await conn.execute(self.payloads.delete())  # info on vulns and anomaloies
+            # bellow is sqlalchmey syntax keep compare
             # pylint: disable=singleton-comparison
-            await conn.execute(self.paths.delete().where(self.paths.c.evil == True))  # Evil requests
-            # Remove params tied to deleted requests
+            await conn.execute(self.paths.delete().where(self.paths.c.evil == True))  # evil reqs
+            # remove params tied to delted reqs
             await conn.execute(self.params.delete().where(~self.params.c.path_id.in_(select(self.paths.c.path_id))))
 
     async def delete_path_by_id(self, path_id):
-        # First remove all references to that path then remove it
+        # first remove stuf that points to that path
         async with self._engine.begin() as conn:
             await conn.execute(
                 self.payloads.delete().where(

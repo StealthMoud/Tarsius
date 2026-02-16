@@ -26,7 +26,7 @@ class ReportGenerator:
         crawled_pages_nbr: int,
         detailed_report_level: int
     ):
-        """Set the information about the scan"""
+        """set info for the scan"""
         self._infos["target"] = target
         self._infos["date"] = time.strftime("%a, %d %b %Y %H:%M:%S +0000", date)
         self._infos["version"] = version
@@ -45,15 +45,10 @@ class ReportGenerator:
     def generate_report(self, output_path):
         raise NotImplementedError("Must be overridden")
 
-    # Vulnerabilities
+    # vulnz
     def add_vulnerability_type(self, name: str, description: str = "", solution: str = "", references=None, wstg=None):
         """
-        This method adds a vulnerability type, it can be invoked to include in the
-        report the type.
-        The types are not stored previously, they are added when the method
-        add_vulnerability(category, level, url, parameter, info) is invoked
-        and if there is no vulnerability of a type, this type will not be presented
-        in the report
+        adds a vuln type to the report. we add them as we find them.
         """
         if name not in self._flaw_types:
             self._flaw_types[name] = {
@@ -78,9 +73,7 @@ class ReportGenerator:
         response: Response = None
     ):
         """
-        Store the information about the vulnerability to be printed later.
-        The method printToFile(fileName) can be used to save in a file the
-        vulnerabilities notified through the current method.
+        save vuln info to print later.
         """
         vuln_dict = {
             "level": level,
@@ -98,15 +91,10 @@ class ReportGenerator:
             self._vulns[category] = []
         self._vulns[category].append(vuln_dict)
 
-    # Anomalies
+    # anomalyz
     def add_anomaly_type(self, name, description="", solution="", references=None, wstg=None):
         """
-        This method adds an anomaly type, it can be invoked to include in the
-        report the type.
-        The types are not stored previously, they are added when the method
-        add_anomaly(category, level, url, parameter, info) is invoked,
-        and if there is no anomaly of a type, this type will not be presented
-        in the report
+        adds an anomaly type to the report.
         """
         if name not in self._flaw_types:
             self._flaw_types[name] = {
@@ -131,9 +119,7 @@ class ReportGenerator:
         response: Response = None
     ):
         """
-        Store the information about the anomaly to be printed later.
-        The method printToFile(fileName) can be used to save in a file the
-        anomalies notified through the current method.
+        save anomaly info for report.
         """
         anom_dict = {
             "request": request,
@@ -151,15 +137,10 @@ class ReportGenerator:
             self._anomalies[category] = []
         self._anomalies[category].append(anom_dict)
 
-    # Additionals
+    # mor stuff
     def add_additional_type(self, name, description="", solution="", references=None, wstg=None):
         """
-        This method adds an "additional" type, it can be invoked to include in the
-        report the type.
-        The types are not stored previously, they are added when the method
-        add_addtional(category, level, url, parameter, info) is invoked,
-        and if there is no additional of a type, this type will not be presented
-        in the report
+        adds more types to the report.
         """
         if name not in self._flaw_types:
             self._flaw_types[name] = {
@@ -184,9 +165,7 @@ class ReportGenerator:
         response: Response = None
     ):
         """
-        Store the information about the additional to be printed later.
-        The method printToFile(fileName) can be used to save in a file the
-        additionals notified through the current method.
+        save extra info for report.
         """
         addition_dict = {
             "request": request,
