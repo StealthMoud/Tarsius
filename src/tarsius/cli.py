@@ -133,7 +133,7 @@ def create_base_request(url, args):
     return Request(url)
 
 
-async def configure_tarsius_basic_settings(wap, args):
+async def configure_tarsius_basic_settings(tarsius_instance, args):
     """Configure Tarsius's base settings."""
     if args.log:
         tarsius_instance.set_logfile(args.log)
@@ -220,26 +220,26 @@ def build_attack_options_from_args(args: Namespace) -> dict:
     if args.modules and "cms" in args.modules and not args.cms:
         attack_options["cms"] = "drupal,joomla,prestashop,spip,wp"
 
-    if args.tarsius_instancep_url:
-        if not is_mod_tarsius_instancep_or_update_set(args):
-            raise InvalidOptionValue("--tarsius_instancep-url", "module tarsius_instancep or --update option is required when --tarsius_instancep-url is used")
-        url_value = fix_url_path(args.tarsius_instancep_url)
-        if is_valid_url(url_value):
-            attack_options["tarsius_instancep_url"] = url_value
+    if args.wapp_url:
+        if not is_mod_wapp_or_update_set(args):
+            raise InvalidOptionValue("--wapp-url", "module wapp or --update option is required when --wapp-url is used")
+        url_value = fix_url_path(args.wapp_url)
+        if url_value:
+            attack_options["wapp_url"] = url_value
         else:
-            raise InvalidOptionValue("--tarsius_instancep-url", url_value)
+            raise InvalidOptionValue("--wapp-url", url_value)
 
-    if args.tarsius_instancep_dir:
-        if not is_mod_tarsius_instancep_or_update_set(args):
-            raise InvalidOptionValue("--tarsius_instancep-dir", "module tarsius_instancep or --update option is required when --tarsius_instancep-dir is used")
-        dir_value = args.tarsius_instancep_dir
-        if os.path.isdir(dir_value):
-            attack_options["tarsius_instancep_dir"] = dir_value
+    if args.wapp_dir:
+        if not is_mod_wapp_or_update_set(args):
+            raise InvalidOptionValue("--wapp-dir", "module wapp or --update option is required when --wapp-dir is used")
+        dir_value = args.wapp_dir
+        if Path(dir_value).is_dir():
+            attack_options["wapp_dir"] = dir_value
         else:
-            raise InvalidOptionValue("--tarsius_instancep-dir", dir_value)
+            raise InvalidOptionValue("--wapp-dir", dir_value)
 
-    if args.update and not args.tarsius_instancep_url and not args.tarsius_instancep_dir:
-        attack_options["tarsius_instancep_url"] = "https://raw.githubusercontent.com/tarsius-scanner/tarsius_instancepalyzerfork/main/"
+    if args.update and not args.wapp_url and not args.wapp_dir:
+        attack_options["wapp_url"] = "https://raw.githubusercontent.com/tarsius-scanner/wappalyzerfork/main/"
 
     if args.skipped_parameters:
         attack_options["skipped_parameters"] = set(args.skipped_parameters)

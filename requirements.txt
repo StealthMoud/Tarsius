@@ -9,3 +9,4 @@ playwright
 mitmproxy
 packaging
 dnspython
+aiosqlite
