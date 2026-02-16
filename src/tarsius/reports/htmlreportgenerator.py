@@ -49,7 +49,6 @@ class HTMLReportGenerator(JSONReportGenerator):
                     os.path.join(output_path, subdir)
                 )
 
-            copy(str(files("tarsius").joinpath(self.REPORT_DIR, "logo_clear.png")), output_path)
         else:
             copytree(str(files("tarsius").joinpath(self.REPORT_DIR)), output_path)
 
