@@ -19,6 +19,9 @@ source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Install Playwright browsers (required for headless scanning)
+playwright install
 ```
 
 ## Usage

@@ -2,3 +2,8 @@ httpx
 Mako
 beautifulsoup4
 tld
+httpx_ntlm
+SQLAlchemy
+browser_cookie3
+playwright
+mitmproxy
