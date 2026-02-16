@@ -47,6 +47,8 @@ To list all available modules:
 python3 bin/tarsius --list-modules
 ```
 
+For more vulnerable websites and recommended test commands, see [test_targets.md](test_targets.md).
+
 ## Features
 - **SQL Injection** detection (Blind and Time-based)
 - **Cross-Site Scripting (XSS)** scanning (Reflected and Permanent)
