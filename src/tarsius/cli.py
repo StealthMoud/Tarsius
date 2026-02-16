@@ -155,6 +155,9 @@ async def configure_tarsius_basic_settings(tarsius_instance, args):
     tarsius_instance.verbosity(args.verbosity)
     tarsius_instance.set_timeout(args.timeout)
 
+    if args.detailed_report_level:
+        tarsius_instance.set_detail_report(args.detailed_report_level)
+
     if args.drop_set_cookie:
         tarsius_instance.set_drop_cookies()
     if "output" in args:
@@ -187,21 +190,8 @@ def build_attack_options_from_args(args: Namespace) -> dict:
     if args.modules and "cms" in args.modules and not args.cms:
         attack_options["cms"] = "drupal,joomla,prestashop,spip,wp"
 
-    if args.wapp_url:
-        url_value = fix_url_path(args.wapp_url)
-        if url_value:
-            attack_options["wapp_url"] = url_value
-        else:
-            raise InvalidOptionValue("--wapp-url", url_value)
 
-    if args.wapp_dir:
-        dir_value = args.wapp_dir
-        if Path(dir_value).is_dir():
-            attack_options["wapp_dir"] = dir_value
-        else:
-            raise InvalidOptionValue("--wapp-dir", dir_value)
-
-    if args.update and not args.wapp_url and not args.wapp_dir:
+    if args.update:
         attack_options["wapp_url"] = "https://raw.githubusercontent.com/tarsius-scanner/wappalyzerfork/main/"
 
     if args.skipped_parameters:
