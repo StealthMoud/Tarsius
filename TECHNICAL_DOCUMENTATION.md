@@ -6,21 +6,10 @@ This document provides an in-depth look at the architecture, logic, and operatio
 Tarsius is a **DAST (Dynamic Application Security Testing)** tool. Unlike Static Analysis (SAST) which looks at source code, Tarsius interacts with a running web application over HTTP to discover vulnerabilities from the perspective of an external attacker.
 
 ### Core Architecture
-Tarsius follows a modular, asynchronous architecture built on Python's `asyncio` framework:
+Tarsius follows a modular, asynchronous architecture built on Python's `asyncio` framework.
 
-```mermaid
-graph TD
-    A[User / CLI] -- Arguments --> B[Engine - Tarsius Controller]
-    B -- Config --> C[Async Crawler]
-    C -- URLs / Forms --> B
-    B -- Targets --> D[Scanner - Active/Passive]
-    D -- Payloads --> E[Target Website]
-    E -- Responses --> D
-    D -- Findings --> F[(SQLite DB)]
-    B -- Generate --> G[Report Generator]
-    F -- Data --> G
-    G -- Output --> H[HTML/JSON/CSV Report]
-```
+> [!NOTE]
+> See [architecture.mermaid](docs/diagrams/architecture.mermaid) for a visual overview of the system components.
 
 - **CLI Layer (`cli.py`, `parsers/`)**: Handles user input, argument validation, and session management.
 - **Engine Layer (`core/controller/tarsius.py`)**: The "brain" of the scanner. Orchestrates the crawler and the attack modules.
@@ -35,27 +24,10 @@ graph TD
 ## 2. Scanning Logic: How it Works
 
 ### Operational Flow
-The following sequence diagram illustrates the lifecycle of a typical scan:
+The following sequence diagram illustrates the lifecycle of a typical scan.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant E as Tarsius Engine
-    participant C as Crawler
-    participant S as Scanner
-    participant R as Reporter
-
-    U->>E: Start Scan (Target URL)
-    E->>C: Explore Attack Surface
-    C-->>E: Return Links & Forms
-    loop For each Target
-        E->>S: Run Attack Modules
-        S->>S: Mutate Parameters
-        S-->>E: Save Findings to DB
-    end
-    E->>R: Generate Report
-    R-->>U: Final Report (HTML/JSON)
-```
+> [!NOTE]
+> See [scanning_flow.mermaid](docs/diagrams/scanning_flow.mermaid) for the step-by-step scanning logic.
 
 
 ### Phase 1: Exploration (Crawling)

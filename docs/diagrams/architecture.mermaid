@@ -1,0 +1,11 @@
+graph TD
+    A[User / CLI] -- Arguments --> B[Engine - Tarsius Controller]
+    B -- Config --> C[Async Crawler]
+    C -- URLs / Forms --> B
+    B -- Targets --> D[Scanner - Active/Passive]
+    D -- Payloads --> E[Target Website]
+    E -- Responses --> D
+    D -- Findings --> F[(SQLite DB)]
+    B -- Generate --> G[Report Generator]
+    F -- Data --> G
+    G -- Output --> H[HTML/JSON/CSV Report]
