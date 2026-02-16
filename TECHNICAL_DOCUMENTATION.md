@@ -8,6 +8,20 @@ Tarsius is a **DAST (Dynamic Application Security Testing)** tool. Unlike Static
 ### Core Architecture
 Tarsius follows a modular, asynchronous architecture built on Python's `asyncio` framework:
 
+```mermaid
+graph TD
+    A[User / CLI] -- Arguments --> B[Engine - Tarsius Controller]
+    B -- Config --> C[Async Crawler]
+    C -- URLs / Forms --> B
+    B -- Targets --> D[Scanner - Active/Passive]
+    D -- Payloads --> E[Target Website]
+    E -- Responses --> D
+    D -- Findings --> F[(SQLite DB)]
+    B -- Generate --> G[Report Generator]
+    F -- Data --> G
+    G -- Output --> H[HTML/JSON/CSV Report]
+```
+
 - **CLI Layer (`cli.py`, `parsers/`)**: Handles user input, argument validation, and session management.
 - **Engine Layer (`core/controller/tarsius.py`)**: The "brain" of the scanner. Orchestrates the crawler and the attack modules.
 - **Crawler (`network/crawler.py`)**: An asynchronous web spider that discovers URLs and forms. It supports both standard HTTP requests and **Headless Firefox** (via Playwright) for JavaScript rendering.
@@ -19,6 +33,30 @@ Tarsius follows a modular, asynchronous architecture built on Python's `asyncio`
 ---
 
 ## 2. Scanning Logic: How it Works
+
+### Operational Flow
+The following sequence diagram illustrates the lifecycle of a typical scan:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant E as Tarsius Engine
+    participant C as Crawler
+    participant S as Scanner
+    participant R as Reporter
+
+    U->>E: Start Scan (Target URL)
+    E->>C: Explore Attack Surface
+    C-->>E: Return Links & Forms
+    loop For each Target
+        E->>S: Run Attack Modules
+        S->>S: Mutate Parameters
+        S-->>E: Save Findings to DB
+    end
+    E->>R: Generate Report
+    R-->>U: Final Report (HTML/JSON)
+```
+
 
 ### Phase 1: Exploration (Crawling)
 The scanner visits the target URL and extracts all links (`<a>`), forms (`<form>`), and scripts. It builds a map of the application's attack surface. If headless mode is enabled, it waits for JavaScript to execute, ensuring modern SPAs (Single Page Applications) are fully covered.
