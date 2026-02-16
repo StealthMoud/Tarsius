@@ -1,0 +1,27 @@
+@startuml architecture
+!theme plain
+skinparam componentStyle uml2
+
+package "Tarsius Web Scanner" {
+    [CLI / User Input] as cli
+    [Tarsius Controller] as engine
+    [Async Crawler] as crawler
+    [Attack Modules] as scanner
+    database "SQLite Session" as db
+    [Report Generator] as reporter
+}
+
+cloud "Target Website" as web
+
+cli --> engine : Command / Args
+engine --> crawler : Discovery Config
+crawler <--> web : HTTP/JS Crawling
+crawler --> engine : Found URLs / Forms
+engine --> scanner : Attack Targets
+scanner <--> web : Injection / Payloads
+scanner --> db : Findings / State
+engine --> reporter : Generate Report
+db --> reporter : Findings Data
+reporter --> [HTML / JSON Report] : Final Output
+
+@enduml

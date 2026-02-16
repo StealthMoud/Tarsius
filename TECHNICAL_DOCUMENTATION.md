@@ -9,7 +9,7 @@ Tarsius is a **DAST (Dynamic Application Security Testing)** tool. Unlike Static
 Tarsius follows a modular, asynchronous architecture built on Python's `asyncio` framework.
 
 > [!NOTE]
-> See [architecture.mermaid](docs/diagrams/architecture.mermaid) for a visual overview of the system components.
+> See [architecture.puml](docs/diagrams/architecture.puml) for a visual overview of the system components.
 
 - **CLI Layer (`cli.py`, `parsers/`)**: Handles user input, argument validation, and session management.
 - **Engine Layer (`core/controller/tarsius.py`)**: The "brain" of the scanner. Orchestrates the crawler and the attack modules.
@@ -27,7 +27,7 @@ Tarsius follows a modular, asynchronous architecture built on Python's `asyncio`
 The following sequence diagram illustrates the lifecycle of a typical scan.
 
 > [!NOTE]
-> See [scanning_flow.mermaid](docs/diagrams/scanning_flow.mermaid) for the step-by-step scanning logic.
+> See [scanning_flow.puml](docs/diagrams/scanning_flow.puml) for the step-by-step scanning logic.
 
 
 ### Phase 1: Exploration (Crawling)

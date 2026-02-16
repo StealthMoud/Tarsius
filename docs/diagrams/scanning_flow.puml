@@ -1,0 +1,40 @@
+@startuml scanning_flow
+!theme plain
+autonumber
+
+actor User
+participant "Tarsius Engine" as Engine
+participant "Async Crawler" as Crawler
+participant "Scanner Subsystem" as Scanner
+database "SQLite Store" as DB
+participant "Report Engine" as Reporter
+
+User -> Engine : Start Scan (URL)
+activate Engine
+
+Engine -> Crawler : Explore (depth/headless)
+activate Crawler
+Crawler -> Crawler : Parse HTML/JS
+Crawler -> Engine : List of Targets
+deactivate Crawler
+
+loop For each Target (URL/Form)
+    Engine -> Scanner : Attack (XSS, SQLi, etc)
+    activate Scanner
+    Scanner -> Scanner : Mutate Parameters
+    Scanner -> DB : Save Vulnerability
+    activate DB
+    DB --> Scanner : Persisted
+    deactivate DB
+    Scanner -> Engine : Task Complete
+    deactivate Scanner
+end
+
+Engine -> Reporter : Generate Professional Report
+activate Reporter
+DB -> Reporter : Fetch Findings
+Reporter -> User : HTML/JSON Output
+deactivate Reporter
+
+deactivate Engine
+@enduml
