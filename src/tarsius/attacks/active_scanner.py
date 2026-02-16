@@ -53,7 +53,6 @@ class ActiveScanner:
         self.verbosity = verbosity
         self._activated_modules: ModuleActivationSettings = {}
         self._current_attack_task: Optional[asyncio.Task] = None
-        self._bug_report = True
         self._max_attack_time = None
         self._user_choice = UserChoice.CONTINUE
         self._modules: Dict[str, Type[Attack]] = self._load_attack_modules()
@@ -90,8 +89,6 @@ class ActiveScanner:
     def set_max_attack_time(self, seconds: float):
         self._max_attack_time = seconds
 
-    def set_bug_reporting(self, value: bool):
-        self._bug_report = value
 
     def set_verbosity(self, verbosity: int):
         self.verbosity = verbosity
@@ -181,13 +178,6 @@ class ActiveScanner:
             except Exception as exception:  # pylint: disable=broad-except
                 exception_traceback = sys.exc_info()[2]
                 logging.exception("An exception occurred in module %s", attack_module.name)
-                if self._bug_report:
-                    await self.send_bug_report(
-                        exception,
-                        exception_traceback,
-                        attack_module.name,
-                        request
-                    )
             else:
                 if request.path_id is not None:
                     attacked_ids.add(request.path_id)
@@ -243,13 +233,6 @@ class ActiveScanner:
                     exception_traceback = sys.exc_info()[2]
                     logging.exception("An exception occurred in module %s", attack_module.name)
 
-                    if self._bug_report:
-                        await self.send_bug_report(
-                            exception,
-                            exception_traceback,
-                            attack_module.name,
-                            original_request
-                        )
                 else:
                     if original_request.path_id is not None:
                         attacked_ids.add(original_request.path_id)
@@ -368,25 +351,3 @@ class ActiveScanner:
 
             return True
 
-    async def send_bug_report(self, exception: Exception, traceback_, module_name: str, original_request: Request):
-        async with AsyncCrawler.with_configuration(self.crawler_configuration) as crawler:
-            traceback_file = str(uuid1())
-            with open(traceback_file, "w", encoding="utf-8") as traceback_fd:
-                print_tb(traceback_, file=traceback_fd)
-                print(f"{exception.__class__.__name__}: {exception}", file=traceback_fd)
-                print(f"Occurred in {module_name} on {original_request}", file=traceback_fd)
-                logging.info("Tarsius %s. httpx %s. OS %s", TARSIUS_VERSION, httpx.__version__, sys.platform)
-
-            try:
-                with open(traceback_file, "rb") as traceback_byte_fd:
-                    upload_request = Request(
-                        "https://tarsius3.ovh/upload.php",
-                        file_params=[
-                            ["crash_report", (traceback_file, traceback_byte_fd.read(), "text/plain")]
-                        ]
-                    )
-                page = await crawler.async_send(upload_request)
-                log_blue(f"Sending crash report {traceback_file} ... {page.content}")
-            except RequestError:
-                logging.error("Error sending crash report")
-            os.unlink(traceback_file)

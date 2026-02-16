@@ -155,12 +155,6 @@ async def configure_tarsius_basic_settings(tarsius_instance, args):
     tarsius_instance.verbosity(args.verbosity)
     tarsius_instance.set_timeout(args.timeout)
 
-    if args.detailed_report_level:
-        tarsius_instance.set_detail_report(args.detailed_report_level)
-    if args.color:
-        tarsius_instance.set_color()
-    if args.no_bugreport:
-        tarsius_instance.active_scanner.set_bug_reporting(False)
     if args.drop_set_cookie:
         tarsius_instance.set_drop_cookies()
     if "output" in args:
@@ -180,34 +174,7 @@ def build_attack_options_from_args(args: Namespace) -> dict:
         "max_attack_time": args.max_attack_time,
     }
 
-    if "dns_endpoint" in args:
-        attack_options["dns_endpoint"] = args.dns_endpoint
 
-    if "endpoint" in args:
-        endpoint = fix_url_path(args.endpoint)
-        if is_valid_endpoint("ENDPOINT", endpoint):
-            attack_options["external_endpoint"] = endpoint
-            attack_options["internal_endpoint"] = endpoint
-        else:
-            raise InvalidOptionValue("--endpoint", args.endpoint)
-
-    if "external_endpoint" in args:
-        external_endpoint = fix_url_path(args.external_endpoint)
-        if is_valid_endpoint("EXTERNAL ENDPOINT", external_endpoint):
-            attack_options["external_endpoint"] = external_endpoint
-        else:
-            raise InvalidOptionValue("--external-endpoint", external_endpoint)
-
-    if "internal_endpoint" in args:
-        internal_endpoint = fix_url_path(args.internal_endpoint)
-        if is_valid_endpoint("INTERNAL ENDPOINT", internal_endpoint):
-            if ping(internal_endpoint):
-                attack_options["internal_endpoint"] = internal_endpoint
-            else:
-                logging.error("Error: Internal endpoint URL must be accessible from Tarsius!")
-                raise InvalidOptionValue("--internal-endpoint", internal_endpoint)
-        else:
-            raise InvalidOptionValue("--internal-endpoint", internal_endpoint)
 
     if args.cms:
         allowed_cms = ["drupal", "joomla", "prestashop", "spip", "wp"]
@@ -221,8 +188,6 @@ def build_attack_options_from_args(args: Namespace) -> dict:
         attack_options["cms"] = "drupal,joomla,prestashop,spip,wp"
 
     if args.wapp_url:
-        if not is_mod_wapp_or_update_set(args):
-            raise InvalidOptionValue("--wapp-url", "module wapp or --update option is required when --wapp-url is used")
         url_value = fix_url_path(args.wapp_url)
         if url_value:
             attack_options["wapp_url"] = url_value
@@ -230,8 +195,6 @@ def build_attack_options_from_args(args: Namespace) -> dict:
             raise InvalidOptionValue("--wapp-url", url_value)
 
     if args.wapp_dir:
-        if not is_mod_wapp_or_update_set(args):
-            raise InvalidOptionValue("--wapp-dir", "module wapp or --update option is required when --wapp-dir is used")
         dir_value = args.wapp_dir
         if Path(dir_value).is_dir():
             attack_options["wapp_dir"] = dir_value
@@ -301,13 +264,6 @@ async def tarsius_main():
             else:
                 raise InvalidOptionValue("-x", exclude_url)
 
-        if "mitm_port" in args:
-            tarsius_instance.set_intercepting_proxy_port(args.mitm_port)
-
-        if "side_file" in args:
-            tarsius_instance.crawler_configuration.cookies = await authenticate_with_side_file(
-                tarsius_instance.crawler_configuration, args.side_file, args.headless
-            )
 
         if "cookie" in args:
             if os.path.isfile(args.cookie):
@@ -322,11 +278,6 @@ async def tarsius_main():
 
         if "http_user" in args and "http_password" in args:
             tarsius_instance.set_http_credentials(HttpCredential(args.http_user, args.http_password, args.auth_method))
-
-        if ("http_user" in args and "http_password" not in args) or \
-                ("http_user" not in args and "http_password" in args):
-            raise InvalidOptionValue("--auth-user and --auth-password",
-                                     "Both options are required when one is used")
 
         for bad_param in args.excluded_parameters:
             tarsius_instance.add_bad_param(bad_param)

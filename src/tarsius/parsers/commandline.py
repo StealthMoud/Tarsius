@@ -69,14 +69,6 @@ def parse_args() -> argparse.Namespace:
         help="Use Tor listener (127.0.0.1:9050)"
     )
 
-    parser.add_argument(
-        "--mitm-port",
-        dest="mitm_port",
-        default=argparse.SUPPRESS,
-        help="Instead of crawling, launch an intercepting proxy on the given port",
-        metavar="PORT",
-        type=int
-    )
 
     parser.add_argument(
         "--headless",
@@ -95,16 +87,6 @@ def parse_args() -> argparse.Namespace:
         type=float
     )
 
-    # This option is deprecated
-    # Should be removed in a future version
-    parser.add_argument(
-        "-a", "--auth-cred",
-        dest="http_credentials",
-        action="store",
-        default=argparse.SUPPRESS,
-        help="(DEPRECATED) Set HTTP authentication credentials",
-        metavar="CREDENTIALS"
-    )
 
     parser.add_argument(
         "--auth-user",
@@ -131,16 +113,6 @@ def parse_args() -> argparse.Namespace:
         choices=["basic", "digest", "ntlm"]
     )
 
-    # This option is deprecated
-    # Should be removed in a future version
-    parser.add_argument(
-        "--form-cred",
-        dest="form_credentials",
-        action="store",
-        default=argparse.SUPPRESS,
-        help="(DEPRECATED) Set login form credentials",
-        metavar="CREDENTIALS"
-    )
 
     parser.add_argument(
         "--form-user",
@@ -202,12 +174,6 @@ def parse_args() -> argparse.Namespace:
         metavar="COOKIE_FILE"
     )
 
-    parser.add_argument(
-        "-sf", "--side-file",
-        help="Use a .side file generated using Selenium IDE to perform an authenticated scan.",
-        default=argparse.SUPPRESS,
-        metavar="SIDE_FILE"
-    )
 
     parser.add_argument(
         "-C", "--cookie-value",
@@ -366,33 +332,8 @@ def parse_args() -> argparse.Namespace:
         type=int, default=32
     )
 
-    parser.add_argument(
-        "--external-endpoint",
-        metavar="EXTERNAL_ENDPOINT_URL",
-        default=argparse.SUPPRESS,
-        help="Url serving as endpoint for target"
-    )
 
-    parser.add_argument(
-        "--internal-endpoint",
-        metavar="INTERNAL_ENDPOINT_URL",
-        default=argparse.SUPPRESS,
-        help="Url serving as endpoint for attacker"
-    )
 
-    parser.add_argument(
-        "--endpoint",
-        metavar="ENDPOINT_URL",
-        default="https://tarsius3.ovh/",
-        help="Url serving as endpoint for both attacker and target"
-    )
-
-    parser.add_argument(
-        "--dns-endpoint",
-        metavar="DNS_ENDPOINT_DOMAIN",
-        default="dns.tarsius3.ovh",
-        help="Domain serving as DNS endpoint for Log4Shell attack"
-    )
 
     parser.add_argument(
         "-t", "--timeout",
@@ -427,11 +368,6 @@ def parse_args() -> argparse.Namespace:
         choices=[0, 1]
     )
 
-    parser.add_argument(
-        "--color",
-        action="store_true",
-        help="Colorize output"
-    )
 
     parser.add_argument(
         "-v", "--verbose",
@@ -475,11 +411,6 @@ def parse_args() -> argparse.Namespace:
         choices=[1, 2]
     )
 
-    parser.add_argument(
-        "--no-bugreport",
-        action="store_true",
-        help="Don't send automatic bug report when an attack module fails"
-    )
 
     group.add_argument(
         "--update",
@@ -502,16 +433,5 @@ def parse_args() -> argparse.Namespace:
         metavar="CMS_LIST"
     )
 
-    parser.add_argument(
-        "--wapp-url",
-        help="Provide a custom URL for updating Wappalyzer Database",
-        metavar="WAPP_URL"
-    )
-
-    parser.add_argument(
-        "--wapp-dir",
-        help="Provide a custom directory path for updating Wappalyzer Database",
-        metavar="WAPP_DIR"
-    )
 
     return parser.parse_args()
