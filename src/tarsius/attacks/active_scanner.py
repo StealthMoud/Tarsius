@@ -109,6 +109,8 @@ class ActiveScanner:
                     self.attack_options,
                     self.crawler_configuration,
                 )
+            except Exception:  # pylint: disable=broad-except
+                # module looks broken, skip it
                 logging.exception("[!] Module %s seems broken and will be skipped", mod_name)
                 continue
 
@@ -124,6 +126,7 @@ class ActiveScanner:
         modules = all_modules if (not requested_modules or requested_modules == "all") else requested_modules.split(",")
 
         async with AsyncCrawler.with_configuration(self.crawler_configuration) as crawler:
+            for mod_name in modules:
                 try:
                     mod = import_module("tarsius.attacks.mod_" + mod_name)
                     class_name = module_to_class_name(mod_name)
