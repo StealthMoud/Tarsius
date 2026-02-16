@@ -7,12 +7,18 @@ Tarsius is a web vulnerability scanner written in Python. It detects security fl
 
 ## Installation
 
-Clone the repository and install the dependencies:
+Clone the repository and set up a virtual environment:
 
 ```bash
 git clone https://github.com/StealthMoud/Tarsius.git
 cd Tarsius
-pip3 install -r requirements.txt
+
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
 ## Usage
