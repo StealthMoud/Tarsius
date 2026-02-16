@@ -9,9 +9,10 @@
 <body>
     <div id="page">
         <header style="text-align: center">
-        <h2 class="title" style="text-align: center">Tarsius vulnerability report</h2>
-        <h3>Target: ${target}</h3>
-        <p>Date of the scan: ${scan_date}. Scope of the scan: ${scan_scope}. Crawled pages: ${crawled_pages_nbr}</p>
+            <img src="logo_clear.png" alt="Tarsius Logo" style="max-width: 200px; margin-bottom: 20px;">
+            <h2 class="title" style="text-align: center">Tarsius vulnerability report</h2>
+            <h3>Target: ${target}</h3>
+            <p>Date of the scan: ${scan_date}. Scope of the scan: ${scan_scope}. Crawled pages: ${crawled_pages_nbr}</p>
         </header>
         <hr />
         % if auth_dict != None:
@@ -28,7 +29,7 @@
         % endif
 
         <h4>Summary</h4>
-        <table class="summary-table" style="background: url('logo_clear.png') no-repeat center;">
+        <table class="summary-table">
             <thead>
                 <tr>
                     <th>Category</th>
