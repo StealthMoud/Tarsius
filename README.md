@@ -1,40 +1,41 @@
 # Tarsius - Web Vulnerability Scanner
-**University Project - 2025**
+**University Project (2025)**
 **Author:** stealthmoud
 
-## Abstract
-Tarsius is a lightweight, black-box web vulnerability scanner developed as part of a university independent study in cybersecurity. The tool is designed to identify common web application security flaws, including SQL Injection, Cross-Site Scripting (XSS), and Server-Side Request Forgery (SSRF).
+## Description
+Tarsius is a web vulnerability scanner written in Python. It detects security flaws like SQL Injection, XSS, and command execution vulnerabilities. This tool was developed as part of an independent study in cybersecurity.
 
-This project demonstrates the practical application of automated security testing methodologies and includes 38 distinct attack modules.
+## Installation
 
-## Features
-The scanner supports active and passive analysis of web applications:
-- **Injection Attacks**: Detection of SQL injection, XSS, XXE, and Command Injection.
-- **Misconfiguration Detection**: Identification of missing security headers, sensitive file exposure, and directory listing.
-- **Crawling Capabilities**: Automated discovery of endpoints and parameters.
-- **Reporting**: Generation of detailed reports in HTML, JSON, and CSV formats.
+Clone the repository and install the dependencies:
 
-## Architecture
-The project is structured into modular components to facilitate extensibility:
-- `src/tarsius/core`: Central logic and controller.
-- `src/tarsius/attacks`: Individual vulnerability detection modules.
-- `src/tarsius/network`: Networking primitives and crawler implementation.
-- `src/tarsius/reports`: Report generation logic.
+```bash
+git clone https://github.com/StealthMoud/Tarsius.git
+cd Tarsius
+pip3 install -r requirements.txt
+```
 
 ## Usage
-To execute the scanner against a target URL:
+
+You can run the scanner directly using Python:
 
 ```bash
-tarsius <target_url> [options]
+python3 bin/tarsius <target_url> [options]
 ```
 
-**Example:**
+### Example
+Scanning a test application:
+
 ```bash
-tarsius http://testphp.vulnweb.com
+python3 bin/tarsius http://testphp.vulnweb.com
 ```
 
-## Disclaimer
-This tool is for educational purposes only. It should only be used on systems you own or have explicit permission to test. The author is not responsible for any misuse.
+## Features
+- **SQL Injection** detection (Blind and Time-based)
+- **Cross-Site Scripting (XSS)** scanning
+- **Misconfiguration checks** (Security Headers, File Disclosure)
+- **Command Execution** and **File Handling** vulnerabilities
+- Generates reports in HTML and JSON formats.
 
 ## License
-This project is released under the GPLv2 license for educational use.
+Released under the GPLv2 license for educational use.
