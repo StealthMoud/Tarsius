@@ -1,7 +1,4 @@
-@startuml architecture
-!theme plain
-skinparam componentStyle uml2
-
+@startuml
 package "Tarsius Web Scanner" {
     [CLI / User Input] as cli
     [Tarsius Controller] as engine
@@ -22,6 +19,5 @@ scanner <--> web : Injection / Payloads
 scanner --> db : Findings / State
 engine --> reporter : Generate Report
 db --> reporter : Findings Data
-reporter --> [HTML / JSON Report] : Final Output
-
+reporter --> [Final Report] : Final Output
 @enduml

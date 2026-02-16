@@ -1,5 +1,4 @@
-@startuml scanning_flow
-!theme plain
+@startuml
 autonumber
 
 actor User
@@ -18,7 +17,7 @@ Crawler -> Crawler : Parse HTML/JS
 Crawler -> Engine : List of Targets
 deactivate Crawler
 
-loop For each Target (URL/Form)
+loop "For each Target"
     Engine -> Scanner : Attack (XSS, SQLi, etc)
     activate Scanner
     Scanner -> Scanner : Mutate Parameters
