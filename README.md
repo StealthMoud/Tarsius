@@ -47,9 +47,9 @@ To list all available modules:
 python3 bin/tarsius --list-modules
 ```
 
-For more vulnerable websites and recommended test commands, see [test_targets.md](test_targets.md).
+For more vulnerable websites and recommended test commands, see [test_targets.md](docs/test_targets.md).
 
-For a detailed explanation of how Tarsius works, its architecture, and its limitations, please refer to [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md).
+For a detailed explanation of how Tarsius works, its architecture, and its limitations, please refer to [TECHNICAL_DOCUMENTATION.md](docs/technical_documentation.md).
 
 ## Features
 - **SQL Injection** detection (Blind and Time-based)

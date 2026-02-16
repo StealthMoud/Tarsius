@@ -1,4 +1,4 @@
-@startuml
+@startuml architecture
 package "Tarsius Web Scanner" {
     [CLI / User Input] as cli
     [Tarsius Controller] as engine
