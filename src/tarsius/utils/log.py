@@ -154,6 +154,7 @@ def log_verbose(message, *args, **kwargs):
     logging.log(VERBOSE_LEVEL, message, extra={'color_name': 'GRAY'}, **kwargs)
 
 
+def log_severity(severity, message):
     # helper to log based on severity number
     if severity == 1:
         log_red(message)
