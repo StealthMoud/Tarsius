@@ -24,27 +24,36 @@ pip install -r requirements.txt
 playwright install
 ```
 
+> [!NOTE]
+> Ensure you are using Python 3.9+ and have a virtual environment activated.
+
 ## Usage
 
-You can run the scanner directly using Python:
+You can run the scanner using the following syntax:
 
 ```bash
-python3 bin/tarsius <target_url> [options]
+python3 bin/tarsius -u <target_url> [options]
 ```
 
 ### Example
-Scanning a test application:
+Scanning a test application with default modules:
 
 ```bash
-python3 bin/tarsius http://testphp.vulnweb.com
+python3 bin/tarsius -u http://testphp.vulnweb.com
+```
+
+To list all available modules:
+```bash
+python3 bin/tarsius --list-modules
 ```
 
 ## Features
 - **SQL Injection** detection (Blind and Time-based)
-- **Cross-Site Scripting (XSS)** scanning
-- **Misconfiguration checks** (Security Headers, File Disclosure)
-- **Command Execution** and **File Handling** vulnerabilities
-- Generates reports in HTML and JSON formats.
+- **Cross-Site Scripting (XSS)** scanning (Reflected and Permanent)
+- **Misconfiguration checks** (Security Headers, File Disclosure, CRLF)
+- **Advanced Scanning**: Supports headless Firefox for JavaScript-heavy sites.
+- **CMS Porting**: Specialized modules for WordPress, Joomla, and Drupal.
+- **Reporting**: Generates comprehensive reports in HTML, JSON, and other formats.
 
 ## License
 Released under the GPLv2 license for educational use.
