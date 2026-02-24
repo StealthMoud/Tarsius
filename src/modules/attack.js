@@ -159,6 +159,7 @@ export class Attack {
                 batch.map(async (mutation) => {
                     if (foundParams.has(mutation.parameter)) return null;
                     try {
+                        logVerbose(`[*] [${this.moduleName}] fuzzing param '${mutation.parameter}' with payload: ${mutation.payload || '?'}`);
                         const response = await this.crawler.send(mutation.request);
                         if (!response) return null;
                         const vulnInfo = checkFn(response, mutation);

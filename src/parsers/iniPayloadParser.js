@@ -24,11 +24,18 @@ export function parseIniPayloads(filePath) {
             continue;
         }
 
-        // otherwise its a payload line
-        if (!sections[currentSection]) {
-            sections[currentSection] = [];
+        // otherwise we only care about the actual payload values
+        // wfuzz format uses:
+        // payload = <the payload string>
+        // rules = <matching rule>
+        // we must ignore rules and messages
+        if (trimmed.startsWith('payload = ')) {
+            if (!sections[currentSection]) {
+                sections[currentSection] = [];
+            }
+            // extract everything after 'payload = '
+            sections[currentSection].push(trimmed.substring(10));
         }
-        sections[currentSection].push(trimmed);
     }
 
     return sections;
