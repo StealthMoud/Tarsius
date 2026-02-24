@@ -2,7 +2,7 @@
 // uses cherio (jquery-like) for parsing instead of regex
 
 import * as cheerio from 'cheerio';
-import { makeAbsolute } from '../network/request.js';
+import { makeAbsolute } from '../http/request.js';
 
 export class Html {
     // url = the page url (for makeing relative links absolute)

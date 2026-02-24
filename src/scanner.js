@@ -5,10 +5,10 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import { logGreen, logRed, logYellow, logVerbose } from '../utils/log.js';
-import { TARSIUS_VERSION } from '../index.js';
-import { sendRequest, fetchWithRedirects } from '../network/web.js';
-import { Request } from '../network/request.js';
+import { logGreen, logRed, logYellow, logVerbose } from './utils/log.js';
+import { TARSIUS_VERSION } from './index.js';
+import { sendRequest, fetchWithRedirects } from './http/client.js';
+import { Request } from './http/request.js';
 
 // scan force presets - controls how agresive the scan is
 const SCAN_FORCE_VALUES = {

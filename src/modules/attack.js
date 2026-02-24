@@ -4,7 +4,7 @@
 
 import path from 'path';
 import { logGreen, logRed, logVerbose, logYellow } from '../utils/log.js';
-import { Request } from '../network/request.js';
+import { Request } from '../http/request.js';
 import { parseIniPayloads, getPayloadPath } from '../parsers/iniPayloadParser.js';
 import { parseTxtPayloads } from '../parsers/txtPayloadParser.js';
 

@@ -23,7 +23,7 @@ export function parseTxtPayloads(filePath) {
 export function getPayloadPath(filename) {
     return path.join(
         path.dirname(new URL(import.meta.url).pathname),
-        '..',
+        '..', '..',
         'data',
         'attacks',
         filename

@@ -2,7 +2,7 @@
 // uses bfs (breadth first search) to find links and forms
 // this is the "go find me all the pages" module
 
-import { Request, makeAbsolute } from './request.js';
+import { Request, makeAbsolute } from '../http/request.js';
 import { AsyncCrawler } from './crawler.js';
 import { Scope } from './scope.js';
 import { logVerbose, logGreen, logYellow } from '../utils/log.js';

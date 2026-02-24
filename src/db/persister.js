@@ -6,7 +6,7 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import { Request } from './request.js';
+import { Request } from '../http/request.js';
 
 const HOME_DIR = os.homedir();
 const BASE_DIR = path.join(HOME_DIR, '.tarsius');

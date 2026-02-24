@@ -6,10 +6,10 @@ import { Command } from 'commander';
 import { TARSIUS_VERSION } from './index.js';
 import { printBanner } from './utils/banners.js';
 import { setVerbosity, logRed, logYellow, logGreen } from './utils/log.js';
-import { Request } from './network/request.js';
-import { CrawlerConfiguration, HttpCredential, FormCredential } from './network/classes.js';
-import { Scope } from './network/scope.js';
-import { Tarsius } from './core/tarsius.js';
+import { Request } from './http/request.js';
+import { CrawlerConfiguration, HttpCredential, FormCredential } from './http/config.js';
+import { Scope } from './crawler/scope.js';
+import { Tarsius } from './scanner.js';
 
 // the report formts we suport
 const REPORT_FORMATS = ['html', 'json', 'csv', 'txt'];

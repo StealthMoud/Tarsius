@@ -4,7 +4,7 @@
 
 import https from 'https';
 import axios from 'axios';
-import { Response } from './response.js';
+import { Response } from '../http/response.js';
 import { logVerbose, logRed } from '../utils/log.js';
 
 // status codes for crawl results

@@ -2,7 +2,7 @@
 // tries comn backup file extentions and paths
 
 import { Attack } from './attack.js';
-import { Request } from '../network/request.js';
+import { Request } from '../http/request.js';
 
 export default class ModBackup extends Attack {
     constructor(crawler, persister, options, crawlerConfig) {

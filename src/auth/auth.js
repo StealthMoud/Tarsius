@@ -1,8 +1,8 @@
 // auth - handles authenticaton for the scanner
 // supports http basic/digest, form login, and headless browser login
 
-import { Request } from './request.js';
-import { AsyncCrawler } from './crawler.js';
+import { Request } from '../http/request.js';
+import { AsyncCrawler } from '../crawler/crawler.js';
 import { logGreen, logRed, logVerbose } from '../utils/log.js';
 
 // check if http auth credentails work

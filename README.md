@@ -128,19 +128,22 @@ node bin/tarsius -u http://target.com -C "PHPSESSID=abc123"
 tarsius/
 ├── bin/tarsius              # cli entry point
 ├── package.json
+├── data/attacks/            # payload files
 ├── docs/                    # technical docs
 ├── report_template/         # html report assets
 └── src/
     ├── index.js             # version constants
     ├── cli.js               # command line interface
-    ├── core/tarsius.js      # main scan controller
-    ├── network/             # http, crawling, persistence
-    ├── attacks/             # attack modules
+    ├── scanner.js           # main scan controller
+    ├── http/                # request, response, http client
+    ├── crawler/             # crawler, explorer, scope
+    ├── auth/                # authentication, cookies
+    ├── db/                  # sqlite persistence
+    ├── modules/             # attack modules
     ├── parsers/             # html, ini, txt parsers
     ├── definitions/         # vulnerability definitions
     ├── reports/             # report generators
-    ├── utils/               # logging, banners
-    └── data/attacks/        # payload files
+    └── utils/               # logging, banners
 ```
 
 ## Report Formats
