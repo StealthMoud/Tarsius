@@ -1,13 +1,37 @@
 // sends http reqests via axios
 
+import http from 'http';
 import https from 'https';
+import dns from 'dns';
 import axios from 'axios';
 import { Request, makeAbsolute, shellEscape } from './request.js';
 import { Response, detailResponse } from './response.js';
 import { logRed, logVerbose } from '../utils/log.js';
 
-// reusable agent for skiping ssl checks
-const insecureAgent = new https.Agent({ rejectUnauthorized: false });
+// light-weight dns cache
+const dnsCache = new Map();
+function cachedLookup(hostname, options, callback) {
+    if (typeof options === 'function') { callback = options; options = {}; }
+    const cached = dnsCache.get(hostname);
+    if (cached) return callback(null, cached, 4);
+    dns.lookup(hostname, options, (err, address, family) => {
+        if (!err) dnsCache.set(hostname, address);
+        callback(err, address, family);
+    });
+}
+
+// global agents for connection reuse (keep-alive)
+const agentOptions = {
+    keepAlive: true,
+    maxSockets: 100,
+    maxFreeSockets: 10,
+    timeout: 60000,
+    lookup: cachedLookup,
+};
+
+export const globalHttpAgent = new http.Agent(agentOptions);
+export const globalHttpsAgent = new https.Agent(agentOptions);
+export const insecureHttpsAgent = new https.Agent({ ...agentOptions, rejectUnauthorized: false });
 
 // build axios config from crawler configuraton
 function buildAxiosConfig(crawlerConfig) {
@@ -47,10 +71,9 @@ function buildAxiosConfig(crawlerConfig) {
         };
     }
 
-    // disable ssl verificaton if not in secure mode
-    if (!crawlerConfig.secure) {
-        config.httpsAgent = insecureAgent;
-    }
+    // use global agents for keep-alive and dns caching
+    config.httpAgent = globalHttpAgent;
+    config.httpsAgent = crawlerConfig.secure ? globalHttpsAgent : insecureHttpsAgent;
 
     return config;
 }
