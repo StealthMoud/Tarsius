@@ -55,6 +55,7 @@ export class ActiveScanner {
     // run all the atack modules
     async run(requests, moduleNames = null) {
         const modulesToRun = moduleNames || DEFAULT_MODULES;
+        let totalVulns = 0;
 
         logYellow(`[*] Attacking ${requests.length} URLs with ${modulesToRun.length} modules`);
         console.log('');
@@ -63,22 +64,15 @@ export class ActiveScanner {
             const modName = modulesToRun[i];
             const modStart = Date.now();
 
-            console.log(`[*] [${i + 1}/${modulesToRun.length}] ${modName}...`);
+            process.stdout.write(`[*] [${i + 1}/${modulesToRun.length}] ${modName}...`);
 
             try {
                 const loader = MODULE_MAP[modName];
-                if (!loader) {
-                    logVerbose(`module "${modName}" not found, skipping`);
-                    continue;
-                }
+                if (!loader) continue;
 
                 const mod = await loader();
                 const ModClass = mod.default || mod[Object.keys(mod)[0]];
-
-                if (!ModClass) {
-                    logVerbose(`module "${modName}" has no export, skipping`);
-                    continue;
-                }
+                if (!ModClass) continue;
 
                 const instance = new ModClass(
                     this.crawler,
@@ -92,20 +86,25 @@ export class ActiveScanner {
                 const elapsed = ((Date.now() - modStart) / 1000).toFixed(1);
                 process.stdout.write('\r' + ' '.repeat(120) + '\r');
                 if (instance._foundVulns > 0) {
-                    logRed(`    found ${instance._foundVulns} issue(s) in ${elapsed}s`);
+                    totalVulns += instance._foundVulns;
+                    logRed(`[!] [${i + 1}/${modulesToRun.length}] ${modName}: ${instance._foundVulns} issue(s) (${elapsed}s)`);
                 } else {
-                    logVerbose(`    clean (${elapsed}s)`);
+                    console.log(`[*] [${i + 1}/${modulesToRun.length}] ${modName}: clean (${elapsed}s)`);
                 }
             } catch (error) {
+                // silently skip modules that arnt implemented yet
                 if (error.code === 'ERR_MODULE_NOT_FOUND') {
-                    logVerbose(`module "${modName}" not implementd yet`);
+                    process.stdout.write('\r' + ' '.repeat(120) + '\r');
+                    console.log(`[*] [${i + 1}/${modulesToRun.length}] ${modName}: skipped`);
                 } else {
-                    logVerbose(`error in module "${modName}": ${error.message}`);
+                    process.stdout.write('\r' + ' '.repeat(120) + '\r');
+                    logVerbose(`[*] [${i + 1}/${modulesToRun.length}] ${modName}: error - ${error.message}`);
                 }
             }
         }
 
         console.log('');
+        return totalVulns;
     }
 
     // list all availble modules
