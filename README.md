@@ -15,10 +15,19 @@ Tarsius is a black box web vulnerability scanner built with Node.js. It crawls w
 git clone https://github.com/StealthMoud/Tarsius.git
 cd Tarsius
 npm install
+npm install -g .
 ```
 
+After this, the `tarsius` command is available globally on your system.
+
+> [!TIP]
+> For development, use `npm link` instead of `npm install -g .` so changes take effect immediately:
+> ```bash
+> npm link
+> ```
+
 > [!NOTE]
-> If you plan to use headless browser scanning, you also need to install Playwright browsers:
+> If you plan to use headless browser scanning, also install Playwright browsers:
 > ```bash
 > npx playwright install firefox
 > ```
@@ -26,32 +35,32 @@ npm install
 ## Usage
 
 ```bash
-node bin/tarsius -u <target_url> [options]
+tarsius -u <target_url> [options]
 ```
 
 ### Quick Examples
 
 ```bash
 # basic scan with default modules
-node bin/tarsius -u http://testphp.vulnweb.com
+tarsius -u http://testphp.vulnweb.com
 
 # scan with specific modules only
-node bin/tarsius -u http://target.com -m xss,sql,exec
+tarsius -u http://target.com -m xss,sql,exec
 
 # scan with proxy and custom timeout
-node bin/tarsius -u http://target.com -p http://127.0.0.1:8080 -t 15
+tarsius -u http://target.com -p http://127.0.0.1:8080 -t 15
 
 # scan through tor
-node bin/tarsius -u http://target.com --tor
+tarsius -u http://target.com --tor
 
 # output json report to a specific folder
-node bin/tarsius -u http://target.com -f json -o ./my_reports
+tarsius -u http://target.com -f json -o ./my_reports
 
 # authenticated scan with cookies
-node bin/tarsius -u http://target.com -C "session=abc123; token=xyz"
+tarsius -u http://target.com -C "session=abc123; token=xyz"
 
 # list all available attack modules
-node bin/tarsius --list-modules
+tarsius --list-modules
 ```
 
 ### Common Options
@@ -79,19 +88,19 @@ node bin/tarsius --list-modules
 | `-C, --cookie-value <c>` | Cookie string for every request |
 | `--jwt <token>` | JWT token for authenticated scans |
 
-Run `node bin/tarsius --help` for the full list of options.
+Run `tarsius --help` for the full list of options.
 
 ### Authentication
 
 ```bash
 # http basic auth
-node bin/tarsius -u http://target.com --auth-user admin --auth-password secret
+tarsius -u http://target.com --auth-user admin --auth-password secret
 
 # form login
-node bin/tarsius -u http://target.com --form-user admin --form-password pass --form-url http://target.com/login
+tarsius -u http://target.com --form-user admin --form-password pass --form-url http://target.com/login
 
 # cookie-based
-node bin/tarsius -u http://target.com -C "PHPSESSID=abc123"
+tarsius -u http://target.com -C "PHPSESSID=abc123"
 ```
 
 ## Attack Modules
