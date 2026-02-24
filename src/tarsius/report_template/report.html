@@ -88,7 +88,7 @@
 
             % for j, vulnerability in enumerate(vulnerabilities[vuln_name]):
             <div class="tab-container">
-                <h4><span class="severity ${level_to_css_class(vulnerability[" level"])}"></span> Vulnerability found in
+                <h4><span class="severity ${level_to_css_class(vulnerability["level"])}"></span> Vulnerability found in
                     ${vulnerability["path"] | h}</h4>
                 <nav class="tab-nav">
                     <a href="#tab-vuln-${i}-${j}-1" class="tab-link active">Description</a>
@@ -225,7 +225,7 @@
 
             % for j, additional in enumerate(additionals[additional_name]):
             <div class="tab-container">
-                <h4><span class="severity ${level_to_css_class(additional[" level"])}"></span> Additional found in
+                <h4><span class="severity ${level_to_css_class(additional["level"])}"></span> Additional found in
                     ${additional["path"] | h}</h4>
                 <nav class="tab-nav">
                     <a href="#tab-addition-${i}-${j}-1" class="tab-link active">Description</a>
