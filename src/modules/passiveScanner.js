@@ -3,20 +3,26 @@
 import { logYellow, logVerbose } from '../utils/log.js';
 
 export class PassiveScanner {
-    constructor() {
+    // persister = object with saveVulnerability method (usually Tarsius instance)
+    constructor(persister = null) {
+        this.persister = persister;
         this._anomalies = [];
     }
 
     // check all crawled pages using their already-fetched responses
     async run(crawledPages) {
-        console.log('[*] Running passive checks...');
+        if (this.persister) {
+            logYellow('[*] Running passive checks...');
+        }
         const total = crawledPages.length;
 
         for (let i = 0; i < total; i++) {
             const { request, response } = crawledPages[i];
 
-            const shortUrl = request.url.length > 60 ? request.url.substring(0, 57) + '...' : request.url;
-            process.stdout.write(`\r    [${i + 1}/${total}] ${shortUrl}`.padEnd(100));
+            if (!this.persister) {
+                const shortUrl = request.url.length > 60 ? request.url.substring(0, 57) + '...' : request.url;
+                process.stdout.write(`\r    [${i + 1}/${total}] ${shortUrl}`.padEnd(100));
+            }
 
             try {
                 this._checkHeaders(request, response);
@@ -26,7 +32,9 @@ export class PassiveScanner {
                 logVerbose(`passive check error on ${request.url}: ${error.message}`);
             }
         }
-        process.stdout.write('\r' + ' '.repeat(100) + '\r');
+        if (!this.persister) {
+            process.stdout.write('\r' + ' '.repeat(100) + '\r');
+        }
     }
 
     // check for missing securty headers
@@ -43,7 +51,7 @@ export class PassiveScanner {
 
         for (const header of securityHeaders) {
             if (!headers[header]) {
-                this._addAnomaly(
+                this._reportAnomaly(
                     'HTTP Security Header Missing',
                     request,
                     `Missing ${header} header`,
@@ -54,7 +62,7 @@ export class PassiveScanner {
 
         // check server header for version leakng
         if (headers.server && /[\d.]+/.test(headers.server)) {
-            this._addAnomaly(
+            this._reportAnomaly(
                 'Web Server Fingerprint',
                 request,
                 `Server header reveals version: ${headers.server}`,
@@ -65,14 +73,14 @@ export class PassiveScanner {
 
     // check cookie securty flags
     _checkCookies(request, response) {
-        const setCookies = response.cookies;
+        const setCookies = response.cookies || [];
 
         for (const cookieStr of setCookies) {
             const lower = cookieStr.toLowerCase();
             const name = cookieStr.split('=')[0].trim();
 
             if (!lower.includes('secure')) {
-                this._addAnomaly(
+                this._reportAnomaly(
                     'Cookie Without Secure Flag',
                     request,
                     `Cookie "${name}" missing Secure flag`,
@@ -81,7 +89,7 @@ export class PassiveScanner {
             }
 
             if (!lower.includes('httponly')) {
-                this._addAnomaly(
+                this._reportAnomaly(
                     'Cookie Without HttpOnly Flag',
                     request,
                     `Cookie "${name}" missing HttpOnly flag`,
@@ -97,7 +105,7 @@ export class PassiveScanner {
         if (!content) return;
 
         if (request.scheme === 'http' && content.includes('type="password"')) {
-            this._addAnomaly(
+            this._reportAnomaly(
                 'Cleartext Password Submission',
                 request,
                 'Login form over unencrypted HTTP',
@@ -106,9 +114,13 @@ export class PassiveScanner {
         }
     }
 
-    _addAnomaly(category, request, info, wstg) {
-        logYellow(`[*] Anomaly: ${info}`);
-        this._anomalies.push({ category, url: request.url, info, wstg });
+    _reportAnomaly(category, request, info, wstg) {
+        if (this.persister) {
+            this.persister.saveVulnerability(request.pathId, 'passive', category, 1, '', info, 'anomaly', wstg);
+        } else {
+            logYellow(`[*] Anomaly: ${info}`);
+            this._anomalies.push({ category, url: request.url, info, wstg });
+        }
     }
 
     get anomalies() { return this._anomalies; }
