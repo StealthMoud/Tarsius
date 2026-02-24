@@ -15,43 +15,34 @@ Tarsius is a black box web vulnerability scanner built with Node.js. It crawls w
 git clone https://github.com/StealthMoud/Tarsius.git
 cd Tarsius
 npm install
-npm install -g .
 ```
-
-After this, the `tarsius` command is available globally on your system.
-
-> [!TIP]
-> For development, use `npm link` instead of `npm install -g .` so changes take effect immediately:
-> ```bash
-> npm link
-> ```
 
 ## Usage
 
 ```bash
-tarsius -u <target_url> [options]
+node bin/tarsius -u <target_url> [options]
 ```
 
 ### Quick Examples
 
 ```bash
 # basic scan with default modules
-tarsius -u http://testphp.vulnweb.com
+node bin/tarsius -u http://testphp.vulnweb.com
 
 # scan with specific modules only
-tarsius -u http://target.com -m xss,sql,exec
+node bin/tarsius -u http://target.com -m xss,sql,exec
 
 # scan with a proxy
-tarsius -u http://target.com -p http://127.0.0.1:8080
+node bin/tarsius -u http://target.com -p http://127.0.0.1:8080
 
 # scan with a cookie
-tarsius -u http://target.com -C "session=abc123"
+node bin/tarsius -u http://target.com -C "session=abc123"
 
 # output json report
-tarsius -u http://target.com -f json -o ./report.json
+node bin/tarsius -u http://target.com -f json -o ./report.json
 
 # list all available attack modules
-tarsius --list-modules
+node bin/tarsius --list-modules
 ```
 
 ### Options
@@ -87,19 +78,19 @@ tarsius --list-modules
 | `--max-scan-time <sec>` | Max total scan time |
 | `--max-attack-time <sec>` | Max time per attack module |
 
-Run `tarsius --help` for the full list.
+Run `node bin/tarsius --help` for the full list.
 
 ### Authentication
 
 ```bash
 # http basic auth
-tarsius -u http://target.com --auth-user admin --auth-password secret
+node bin/tarsius -u http://target.com --auth-user admin --auth-password secret
 
 # form login
-tarsius -u http://target.com --form-user admin --form-password pass --form-url http://target.com/login
+node bin/tarsius -u http://target.com --form-user admin --form-password pass --form-url http://target.com/login
 
 # cookie-based
-tarsius -u http://target.com -C "PHPSESSID=abc123"
+node bin/tarsius -u http://target.com -C "PHPSESSID=abc123"
 ```
 
 ## Attack Modules
@@ -137,7 +128,6 @@ tarsius -u http://target.com -C "PHPSESSID=abc123"
 tarsius/
 ├── bin/tarsius              # cli entry point
 ├── package.json
-├── config/                  # default scanner config
 ├── docs/                    # technical docs
 ├── report_template/         # html report assets
 └── src/
