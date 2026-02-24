@@ -21,10 +21,10 @@ function createProgram() {
         .description(`Tarsius ${TARSIUS_VERSION}: Web application vulnerabilty scanner`)
         .version(TARSIUS_VERSION)
 
-        // target url - the most importnt one
-        .option('-u, --url <url>', 'the base url to scan', 'http://example.com/')
+        // target - the only requird option
+        .requiredOption('-u, --url <url>', 'target url to scan')
         .option('--data <data>', 'urlencoded data for post requsts')
-        .option('--scope <scope>', 'set scan scope (url, folder, domain)', 'folder')
+        .option('--scope <scope>', 'scan scope (url, page, folder, domain)', 'domain')
 
         // modules
         .option('-m, --module <modules>', 'comma-separated list of moduls to run')
@@ -97,11 +97,7 @@ export async function tarsiusMain() {
         return;
     }
 
-    // make sure we have a url to scan
-    if (!opts.url || opts.url === 'http://example.com/') {
-        logRed('[!] You need to specify a target url with -u');
-        process.exit(1);
-    }
+    // the url is requird, commmander handles this with requiredOption
 
     try {
         // build the initial requst from the target url
