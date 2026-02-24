@@ -3,6 +3,7 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import * as cheerio from 'cheerio';
 import { logGreen, logRed, logYellow, logVerbose } from './utils/log.js';
 import { TARSIUS_VERSION } from './index.js';
 import { sendRequest, fetchWithRedirects } from './http/client.js';
@@ -265,24 +266,31 @@ export class Tarsius {
         }
     }
 
-    // basic link extracton from html - todo: replace with cherio parser
+    // fast and accurate link extracton using cheerio
     _extractLinks(html, baseUrl) {
         const links = new Set();
         if (!html) return links;
 
-        // find href atributes
-        const hrefRegex = /href\s*=\s*["']([^"']+)["']/gi;
-        let match;
-        while ((match = hrefRegex.exec(html)) !== null) {
-            try {
-                const absUrl = new URL(match[1], baseUrl).href;
-                // only keep http/https links
-                if (absUrl.startsWith('http://') || absUrl.startsWith('https://')) {
-                    links.add(absUrl.split('#')[0]); // remove fragments
+        try {
+            const $ = cheerio.load(html);
+
+            // find all links in href and src attributes
+            $('a[href], link[href], iframe[src], script[src]').each((_, el) => {
+                const attr = $(el).attr('href') || $(el).attr('src');
+                if (!attr) return;
+
+                try {
+                    const absUrl = new URL(attr, baseUrl).href;
+                    // only keep http/https links
+                    if (absUrl.startsWith('http://') || absUrl.startsWith('https://')) {
+                        links.add(absUrl.split('#')[0]); // remove fragments
+                    }
+                } catch {
+                    // skip invalid urls
                 }
-            } catch {
-                // bad url, skip it
-            }
+            });
+        } catch (err) {
+            logVerbose(`cheerio parsing error: ${err.message}`);
         }
 
         return links;
