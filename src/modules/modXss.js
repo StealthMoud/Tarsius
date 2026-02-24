@@ -6,14 +6,14 @@ export default class ModXss extends Attack {
     constructor(crawler, persister, options, crawlerConfig) {
         super(crawler, persister, options, crawlerConfig);
         this.moduleName = 'xss';
+
+        // load payloads once
+        const payloadSections = this.loadIniPayloads('xssPayloads.ini');
+        this._payloads = Object.values(payloadSections).flat();
     }
 
     async attack(request) {
-        // load xss payloads from the data folder
-        const payloadSections = this.loadIniPayloads('xssPayloads.ini');
-        const allPayloads = Object.values(payloadSections).flat();
-
-        const mutator = new Mutator(allPayloads, this.options.skippedParams || []);
+        const mutator = new Mutator(this._payloads, this.options.skippedParams || []);
 
         for (const mutation of mutator.mutate(request)) {
             if (this._isTimeUp()) break;

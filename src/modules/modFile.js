@@ -6,13 +6,14 @@ export default class ModFile extends Attack {
     constructor(crawler, persister, options, crawlerConfig) {
         super(crawler, persister, options, crawlerConfig);
         this.moduleName = 'file';
+
+        // load payloads once
+        const payloadSections = this.loadIniPayloads('fileHandlingPayloads.ini');
+        this._payloads = Object.values(payloadSections).flat();
     }
 
     async attack(request) {
-        const payloadSections = this.loadIniPayloads('fileHandlingPayloads.ini');
-        const allPayloads = Object.values(payloadSections).flat();
-
-        const mutator = new Mutator(allPayloads, this.options.skippedParams || []);
+        const mutator = new Mutator(this._payloads, this.options.skippedParams || []);
 
         for (const mutation of mutator.mutate(request)) {
             if (this._isTimeUp()) break;

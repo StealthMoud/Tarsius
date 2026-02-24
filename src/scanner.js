@@ -284,7 +284,7 @@ export class Tarsius {
 
         const attackOptions = {
             level: this.attackLevel,
-            maxAttackTime: this.maxAttackTime,
+            maxAttackTime: this.maxAttackTime || 60, // default 60s per module
             skippedParams: this._skippedParams,
             timeout: this.crawlerConfig.timeout,
         };
