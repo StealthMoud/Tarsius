@@ -2,13 +2,17 @@
 // this is where all the actual reqests get sent and recieved
 // wraps axios with our cusotm config, retries, and stuff
 
+import https from 'https';
 import axios from 'axios';
 import { Request, makeAbsolute, shellEscape } from './request.js';
 import { Response, detailResponse } from './response.js';
 import { logRed, logVerbose } from '../utils/log.js';
 
-// create an axios instanc with the right settings from crawler config
-function createHttpClient(crawlerConfig) {
+// reusable agent for skiping ssl checks
+const insecureAgent = new https.Agent({ rejectUnauthorized: false });
+
+// build axios config from crawler configuraton
+function buildAxiosConfig(crawlerConfig) {
     const config = {
         timeout: crawlerConfig.timeout * 1000, // axios uses miliseconds
         maxRedirects: 0, // we handle redirects ourselfs
@@ -16,17 +20,20 @@ function createHttpClient(crawlerConfig) {
         headers: {
             'User-Agent': crawlerConfig.userAgent,
         },
-        decompress: crawlerConfig.compression,
     };
 
     // setup proxy if we have one
     if (crawlerConfig.proxy) {
-        const proxyUrl = new URL(crawlerConfig.proxy);
-        config.proxy = {
-            host: proxyUrl.hostname,
-            port: parseInt(proxyUrl.port, 10),
-            protocol: proxyUrl.protocol,
-        };
+        try {
+            const proxyUrl = new URL(crawlerConfig.proxy);
+            config.proxy = {
+                host: proxyUrl.hostname,
+                port: parseInt(proxyUrl.port, 10),
+                protocol: proxyUrl.protocol,
+            };
+        } catch {
+            // bad proxy url, skip it
+        }
     }
 
     // add any extra hedaers the user specifed
@@ -44,12 +51,10 @@ function createHttpClient(crawlerConfig) {
 
     // disable ssl verificaton if not in secure mode
     if (!crawlerConfig.secure) {
-        config.httpsAgent = new (await import('https')).Agent({
-            rejectUnauthorized: false,
-        });
+        config.httpsAgent = insecureAgent;
     }
 
-    return axios.create(config);
+    return config;
 }
 
 // send a request and get back a nice Response objct
@@ -58,12 +63,12 @@ export async function sendRequest(request, crawlerConfig) {
     const startTime = Date.now();
 
     try {
-        const client = await createAxiosConfig(crawlerConfig);
+        const config = buildAxiosConfig(crawlerConfig);
 
         const axiosConfig = {
             method: request.method.toLowerCase(),
             url: request.url,
-            ...client,
+            ...config,
         };
 
         // add referer heaer if we have one
@@ -101,52 +106,6 @@ export async function sendRequest(request, crawlerConfig) {
         }
         return null;
     }
-}
-
-// build axios config from crawler configuraton
-// seprated out so we can reuse it
-async function createAxiosConfig(crawlerConfig) {
-    const config = {
-        timeout: crawlerConfig.timeout * 1000,
-        maxRedirects: 0,
-        validateStatus: () => true,
-        headers: {
-            'User-Agent': crawlerConfig.userAgent,
-        },
-    };
-
-    if (crawlerConfig.proxy) {
-        try {
-            const proxyUrl = new URL(crawlerConfig.proxy);
-            config.proxy = {
-                host: proxyUrl.hostname,
-                port: parseInt(proxyUrl.port, 10),
-                protocol: proxyUrl.protocol,
-            };
-        } catch {
-            // bad proxy url, skip it
-        }
-    }
-
-    if (crawlerConfig.headers) {
-        Object.assign(config.headers, crawlerConfig.headers);
-    }
-
-    if (crawlerConfig.httpCredential) {
-        config.auth = {
-            username: crawlerConfig.httpCredential.username,
-            password: crawlerConfig.httpCredential.password,
-        };
-    }
-
-    if (!crawlerConfig.secure) {
-        const https = await import('https');
-        config.httpsAgent = new https.Agent({
-            rejectUnauthorized: false,
-        });
-    }
-
-    return config;
 }
 
 // follow redirects manualy so we can track the chain
