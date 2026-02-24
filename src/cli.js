@@ -64,7 +64,7 @@ function createProgram() {
         .option('--max-attack-time <seconds>', 'max time per atack module')
 
         // concurency
-        .option('--threads <n>', 'concurrent threads for crawling and attacking', '16')
+        .option('-T, --threads <n>', 'concurrent threads for crawling and attacking', '16')
 
         // request setings
         .option('-t, --timeout <seconds>', 'request timout in seconds', '5')

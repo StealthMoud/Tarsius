@@ -205,9 +205,19 @@ export class Tarsius {
     async run() {
         const startTime = Date.now();
         const target = this.crawlerConfig.baseRequest.url;
+        const method = this.crawlerConfig.baseRequest.method;
+        const modCount = this._modules ? this._modules.length : 'all active';
 
-        logYellow(`[*] Target: ${target}`);
-        logYellow(`[*] Scope: ${this.scope.scopeType}`);
+        console.log('────────────────────────────────────────────────────────────');
+        console.log(` :: Method           : ${method}`);
+        console.log(` :: URL              : ${target}`);
+        console.log(` :: Scope            : ${this.scope.scopeType}`);
+        console.log(` :: Timeout          : ${this.crawlerConfig.timeout}s`);
+        console.log(` :: Threads          : ${this.threads}`);
+        console.log(` :: Max Depth        : ${this.maxDepth}`);
+        console.log(` :: Modules          : ${modCount}`);
+        console.log(` :: Report Format    : ${this.reportFormat}`);
+        console.log('────────────────────────────────────────────────────────────');
         console.log('');
 
         // step 1: crawl
