@@ -1,7 +1,7 @@
 // base class for atack modules
 
 import path from 'path';
-import { logGreen, logRed, logVerbose, logYellow } from '../utils/log.js';
+import { logGreen, logRed, logVerbose, logYellow, logBlue } from '../utils/log.js';
 import { Request } from '../http/request.js';
 import { parseIniPayloads, getPayloadPath } from '../parsers/iniPayloadParser.js';
 import { parseTxtPayloads } from '../parsers/txtPayloadParser.js';
@@ -47,11 +47,9 @@ export class Attack {
         for (let i = 0; i < total; i++) {
             const request = requests[i];
 
-            // show progress (only if not running in parallel)
-            if (!this.options.silentProgress) {
-                const shortUrl = request.url.length > 60 ? request.url.substring(0, 57) + '...' : request.url;
-                process.stdout.write(`\r    [${i + 1}/${total}] ${shortUrl}`.padEnd(100));
-            }
+            // explicitly log what we are testing so the user sees the steps
+            const shortUrl = request.url.length > 80 ? request.url.substring(0, 77) + '...' : request.url;
+            logBlue(`[*] [${this.moduleName}] Testing: ${shortUrl}`);
 
             // check if we already atacekd this one
             if (this.persister && this.persister.hasBeenAttacked(request.pathId, this.moduleName)) {

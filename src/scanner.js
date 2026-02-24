@@ -4,7 +4,7 @@ import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import * as cheerio from 'cheerio';
-import { logGreen, logRed, logYellow, logVerbose } from './utils/log.js';
+import { logGreen, logRed, logYellow, logVerbose, logBlue } from './utils/log.js';
 import { TARSIUS_VERSION } from './index.js';
 import { sendRequest, fetchWithRedirects } from './http/client.js';
 import { Request } from './http/request.js';
@@ -252,8 +252,10 @@ export class Tarsius {
 
             if (batch.length === 0) break;
 
-            // show progress
-            process.stdout.write(`\r[*] Crawled: ${this._crawledUrls.length} | Queued: ${urlsToVisit.length + batch.length} | Batch: ${batch.length}`.padEnd(120));
+            // Log the batch we are about to fetch
+            for (const bUrl of batch) {
+                logBlue(`[*] Crawling: ${bUrl}`);
+            }
 
             // fetch all urls in this batch concurently
             const results = await Promise.allSettled(
