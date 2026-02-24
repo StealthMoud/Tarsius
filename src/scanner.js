@@ -164,10 +164,12 @@ export class Tarsius {
         // step 1: crawl the website to find all pages
         if (!this.skipCrawl) {
             await this._crawl();
+            process.stdout.write('\r' + ' '.repeat(120) + '\r');
         }
 
         const pageCount = this._crawledUrls.length;
-        logGreen(`[*] Tarsius found ${pageCount} URLs and forms during the scan`);
+        const crawlTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        logGreen(`[*] Found ${pageCount} URLs in ${crawlTime}s`);
         console.log('');
 
         // step 2: run atack modules against found pages
@@ -182,7 +184,7 @@ export class Tarsius {
 
     // crawl the target websit to discover pages and forms
     async _crawl() {
-        logVerbose('[*] Starting crawler...');
+        logYellow('[*] Crawling target...');
 
         // start with the base url
         const urlsToVisit = [this.crawlerConfig.baseRequest.url];
@@ -191,8 +193,9 @@ export class Tarsius {
         urlsToVisit.push(...this._startUrls);
 
         const visited = new Set();
+        const crawlStart = Date.now();
 
-        // simple bfs crawlr - todo: replace with full concurent crawler
+        // simple bfs crawlr
         while (urlsToVisit.length > 0) {
             const url = urlsToVisit.shift();
 
@@ -203,6 +206,10 @@ export class Tarsius {
             if (visited.size >= this.maxDepth * this.maxLinksPerPage) break;
 
             visited.add(url);
+
+            // show what were crawling
+            const shortUrl = url.length > 80 ? url.substring(0, 77) + '...' : url;
+            process.stdout.write(`\r[*] Crawled: ${this._crawledUrls.length} | Queued: ${urlsToVisit.length} | ${shortUrl}`.padEnd(120));
 
             try {
                 const request = new Request(url);
@@ -218,7 +225,6 @@ export class Tarsius {
                 });
 
                 // extract links from the page
-                // todo: use the real html parser to find all links and forms
                 const links = this._extractLinks(response.content, url);
                 for (const link of links) {
                     if (!visited.has(link) && this.scope.check(link)) {
@@ -231,7 +237,11 @@ export class Tarsius {
 
             // check time limit
             if (this.maxScanTime) {
-                // todo: implement time limit checking
+                const elapsed = (Date.now() - crawlStart) / 1000;
+                if (elapsed >= this.maxScanTime) {
+                    logYellow('\n[*] Crawl time limit reached');
+                    break;
+                }
             }
         }
     }
