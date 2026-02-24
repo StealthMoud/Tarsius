@@ -1,16 +1,8 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Tarsius - Black Box Web Scanner
-Main executable script
-"""
-import sys
-import os
+#!/usr/bin/env node
 
-# Add src directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+// tarsius - black box web scanner
+// this is the front door, just kicks off the main logic
 
-from tarsius.cli import tarsius_asyncio_wrapper
+import { tarsiusMain } from '../src/cli.js';
 
-if __name__ == "__main__":
-    tarsius_asyncio_wrapper()
+tarsiusMain();
