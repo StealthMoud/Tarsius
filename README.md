@@ -3,7 +3,7 @@
 **Author:** stealthmoud
 
 ## Description
-Tarsius is a black box web vulnerability scanner built with Node.js. It crawls websites, discovers pages and forms, then tests them for security flaws like SQL Injection, XSS, command execution, and more. Originally written in Python, it was rewritten in JavaScript for better performance and modern tooling.
+Tarsius is a black box web vulnerability scanner built with Node.js. It crawls websites, discovers pages and forms, then tests them for security flaws like SQL Injection, XSS, command execution, and more.
 
 ## Requirements
 - **Node.js** 18.0.0 or higher
@@ -26,12 +26,6 @@ After this, the `tarsius` command is available globally on your system.
 > npm link
 > ```
 
-> [!NOTE]
-> If you plan to use headless browser scanning, also install Playwright browsers:
-> ```bash
-> npx playwright install firefox
-> ```
-
 ## Usage
 
 ```bash
@@ -47,48 +41,53 @@ tarsius -u http://testphp.vulnweb.com
 # scan with specific modules only
 tarsius -u http://target.com -m xss,sql,exec
 
-# scan with proxy and custom timeout
-tarsius -u http://target.com -p http://127.0.0.1:8080 -t 15
+# scan with a proxy
+tarsius -u http://target.com -p http://127.0.0.1:8080
 
-# scan through tor
-tarsius -u http://target.com --tor
+# scan with a cookie
+tarsius -u http://target.com -C "session=abc123"
 
-# output json report to a specific folder
-tarsius -u http://target.com -f json -o ./my_reports
-
-# authenticated scan with cookies
-tarsius -u http://target.com -C "session=abc123; token=xyz"
+# output json report
+tarsius -u http://target.com -f json -o ./report.json
 
 # list all available attack modules
 tarsius --list-modules
 ```
 
-### Common Options
+### Options
 
 | Option | Description |
 |--------|-------------|
 | `-u, --url <url>` | Target URL to scan |
-| `-m, --module <list>` | Comma-separated list of modules to run |
+| `-m, --module <list>` | Comma-separated modules to run |
 | `-l, --level <1\|2>` | Attack level (2 = more aggressive) |
 | `-d, --depth <n>` | Max crawl depth (default: 40) |
 | `-t, --timeout <sec>` | Request timeout in seconds (default: 10) |
 | `-p, --proxy <url>` | HTTP/SOCKS proxy URL |
-| `--tor` | Use Tor (127.0.0.1:9050) |
 | `-f, --format <fmt>` | Report format: html, json, csv, txt |
 | `-o, --output <path>` | Output file or directory |
 | `-v, --verbose <0-2>` | Verbosity level |
-| `--scope <scope>` | Scan scope: url, page, folder, subdomain, domain, punk |
-| `-S, --scan-force <f>` | Intensity: paranoid, sneaky, polite, normal, aggressive, insane |
-| `--headless <mode>` | Headless browser: no, hidden, visible |
-| `--skip-crawl` | Skip crawling, attack previously found URLs |
-| `--flush-session` | Clear all stored data for this target |
+| `--scope <scope>` | Scan scope: url, folder, domain |
+| `--skip-crawl` | Skip crawling, attack found URLs only |
+| `-s, --start <urls>` | Extra URLs to crawl |
+| `-x, --exclude <urls>` | URLs to exclude |
+| `--skip <params>` | Parameters to skip attacking |
 | `-H, --header <h>` | Custom header (repeatable) |
 | `-A, --user-agent <a>` | Custom user agent |
 | `--verify-ssl` | Enable SSL certificate verification |
 | `-C, --cookie-value <c>` | Cookie string for every request |
-| `--jwt <token>` | JWT token for authenticated scans |
+| `-c, --cookie <file>` | JSON cookie file path |
+| `--auth-user <user>` | HTTP basic auth username |
+| `--auth-password <pw>` | HTTP basic auth password |
+| `--form-user <user>` | Login form username |
+| `--form-password <pw>` | Login form password |
+| `--form-url <url>` | Login form URL |
+| `--tasks <n>` | Concurrent crawl tasks (default: 32) |
+| `--max-links-per-page <n>` | Max links per page (default: 100) |
+| `--max-scan-time <sec>` | Max total scan time |
+| `--max-attack-time <sec>` | Max time per attack module |
 
-Run `tarsius --help` for the full list of options.
+Run `tarsius --help` for the full list.
 
 ### Authentication
 
@@ -124,48 +123,45 @@ tarsius -u http://target.com -C "PHPSESSID=abc123"
 | `shellshock` | Shellshock (CVE-2014-6271) | |
 | `log4shell` | Log4Shell (CVE-2021-44228) | |
 | `spring4shell` | Spring4Shell (CVE-2022-22965) | |
-| `nikto` | Known dangerous paths | |
+| `nikto` | Known dangerous files and scripts | |
 | `buster` | Directory brute force | |
 | `brute_login_form` | Weak credential testing | |
 | `htaccess` | Access control bypass | |
 | `methods` | Uncommon HTTP methods | |
+| `ldap` | LDAP injection | |
 | `takeover` | Subdomain takeover | |
-| `wapp` | Technology fingerprinting (Wappalyzer) | |
-| `htp` | Technology fingerprinting (HashThePlanet) | |
 
 ## Project Structure
 
 ```
 tarsius/
-├── bin/tarsius              # entry point
+├── bin/tarsius              # cli entry point
 ├── package.json
 ├── config/                  # default scanner config
-├── docs/                    # diagrams and technical docs
-├── report_template/         # html report css/js/assets
+├── docs/                    # technical docs
+├── report_template/         # html report assets
 └── src/
     ├── index.js             # version constants
     ├── cli.js               # command line interface
     ├── core/tarsius.js      # main scan controller
     ├── network/             # http, crawling, persistence
-    ├── attacks/             # attack modules and scanners
+    ├── attacks/             # attack modules
     ├── parsers/             # html, ini, txt parsers
-    ├── definitions/         # vulnerability type definitions
+    ├── definitions/         # vulnerability definitions
     ├── reports/             # report generators
     ├── utils/               # logging, banners
     └── data/attacks/        # payload files
 ```
 
 ## Report Formats
-- **HTML** — interactive report you can open in a browser
-- **JSON** — structured data for automation and CI/CD
+- **HTML** — visual report for the browser
+- **JSON** — structured data for automation
 - **CSV** — importable into spreadsheets
-- **TXT** — plain text for quick reading
-
-Reports are saved to `~/.tarsius/generated_report/` by default, or use `-o` to specify a path.
+- **TXT** — plain text summary
 
 ## Documentation
 - [Test Targets](docs/test_targets.md) — vulnerable websites for testing
-- [Technical Documentation](docs/technical_documentation.md) — architecture and internals
+- [Technical Documentation](docs/technical_documentation.md) — architecture details
 
 ## License
 Released under the GPLv2 license for educational use.
