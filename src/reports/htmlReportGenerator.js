@@ -57,24 +57,51 @@ export class HtmlReportGenerator extends ReportGenerator {
         }
     }
 
+    // helper to map vulnerability categories to explicit severity scores for badges
+    _getSeverity(category) {
+        const critical = ['Command Execution', 'SQL Injection', 'Shellshock', 'Spring4Shell', 'Log4Shell', 'XML External Entity', 'Server Side Request Forgery', 'Local File Inclusion', 'File Inclusion'];
+        const high = ['Reflected Cross Site Scripting', 'Stored Cross Site Scripting', 'LDAP Injection', 'XPath Injection', 'Unrestricted File Upload', 'Htaccess Bypass', 'Subdomain Takeover', 'NS Subdomain Takeover', 'Weak Credentials'];
+        const medium = ['Open Redirect', 'Cross Site Request Forgery', 'CRLF Injection', 'SSL/TLS Issue', 'HTML Injection', 'Stored HTML Injection'];
+        const low = ['Backup File', 'Hidden Resource', 'Potentially Dangerous Resource'];
+        // all 'anomalies' and info disclosures default to Info or Low
+
+        if (critical.includes(category)) return 'critical';
+        if (high.includes(category)) return 'high';
+        if (medium.includes(category)) return 'medium';
+        if (low.includes(category)) return 'low';
+        return 'info';
+    }
+
     // build the actual html content
     _buildHtml() {
         const vulnCount = Object.values(this.vulnerabilities).reduce((s, a) => s + a.length, 0);
         const anomalyCount = Object.values(this.anomalies).reduce((s, a) => s + a.length, 0);
 
+        let tocLinks = '';
         let vulnSections = '';
+
+        // build vulnerabilities
         for (const [category, items] of Object.entries(this.vulnerabilities)) {
             const def = DEFINITIONS[category];
             const desc = def ? def.description() : '';
             const solution = def ? def.solution() : '';
+            const severity = this._getSeverity(category);
+            const anchorId = `vuln-${category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
+            tocLinks += `<a href="#${anchorId}" class="toc-link">${this._escape(category)} <span class="badge-count">${items.length}</span></a>`;
 
             vulnSections += `
-                <div class="vulnerability-section">
-                    <h3>${this._escape(category)} (${items.length})</h3>
-                    <p class="description">${this._escape(desc)}</p>
-                    <p class="solution"><strong>Solution:</strong> ${this._escape(solution)}</p>
+                <div id="${anchorId}" class="issue-section">
+                    <div class="issue-header">
+                        <span class="severity-badge sev-${severity}">${severity}</span>
+                        <h3>${this._escape(category)}</h3>
+                    </div>
+                    <div class="issue-meta">
+                        <p class="desc">${this._escape(desc)}</p>
+                        <div class="sol"><strong>Solution:</strong> ${this._escape(solution)}</div>
+                    </div>
                     <table>
-                        <tr><th>URL</th><th>Parameter</th><th>Info</th><th>Verify (CURL)</th></tr>
+                        <tr><th>URL</th><th>Parameter</th><th>Target Info</th><th>Verify (CURL)</th></tr>
                         ${items.map(item => {
                 const escapedUrl = this._escape(item.url || '');
                 const escapedParam = this._escape(item.parameter || '');
@@ -85,7 +112,7 @@ export class HtmlReportGenerator extends ReportGenerator {
                                 <td><a href="${escapedUrl}" target="_blank">${escapedUrl}</a></td>
                                 <td><strong>${escapedParam}</strong></td>
                                 <td>${escapedInfo}</td>
-                                <td>${escapedCurl ? `<code>${escapedCurl}</code>` : 'N/A'}</td>
+                                <td>${escapedCurl ? `<code>${escapedCurl}</code>` : '-'}</td>
                             </tr>
                             `;
             }).join('')}
@@ -95,10 +122,19 @@ export class HtmlReportGenerator extends ReportGenerator {
         }
 
         let anomalySections = '';
+        // build anomalies
         for (const [category, items] of Object.entries(this.anomalies)) {
+            const severity = 'info';
+            const anchorId = `anom-${category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
+            tocLinks += `<a href="#${anchorId}" class="toc-link">${this._escape(category)} <span class="badge-count">${items.length}</span></a>`;
+
             anomalySections += `
-                <div class="anomaly-section">
-                    <h3>${this._escape(category)} (${items.length})</h3>
+                <div id="${anchorId}" class="issue-section">
+                    <div class="issue-header">
+                        <span class="severity-badge sev-${severity}">${severity}</span>
+                        <h3>${this._escape(category)}</h3>
+                    </div>
                     <table>
                         <tr><th>URL</th><th>Info</th><th>Verify (CURL)</th></tr>
                         ${items.map(item => {
@@ -109,7 +145,7 @@ export class HtmlReportGenerator extends ReportGenerator {
                             <tr>
                                 <td><a href="${escapedUrl}" target="_blank">${escapedUrl}</a></td>
                                 <td>${escapedInfo}</td>
-                                <td>${escapedCurl ? `<code>${escapedCurl}</code>` : 'N/A'}</td>
+                                <td>${escapedCurl ? `<code>${escapedCurl}</code>` : '-'}</td>
                             </tr>
                             `;
             }).join('')}
@@ -126,30 +162,48 @@ export class HtmlReportGenerator extends ReportGenerator {
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Tarsius Scan Report</h1>
-            <p>Version ${TARSIUS_VERSION} | Generated ${new Date().toISOString()}</p>
-            <p>Target: ${this._escape(this.infos.target || '')}</p>
-        </header>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Tarsius</h2>
+            <p>Scan Report v${TARSIUS_VERSION}</p>
+        </div>
+        <div class="toc-group">
+            <div class="toc-title">Findings Navigation</div>
+            ${tocLinks || '<div class="toc-link" style="color:#64748b;">No findings</div>'}
+        </div>
+    </div>
 
-        <section class="summary">
-            <h2>Summary</h2>
-            <div class="stats">
-                <div class="stat vuln">${vulnCount} Vulnerabilities</div>
-                <div class="stat anomaly">${anomalyCount} Anomalies</div>
+    <div class="main-content">
+        <div class="dashboard">
+            <div class="dash-header">
+                <div class="dash-title">
+                    <h1>Executive Summary</h1>
+                    <p>Target: <a href="${this._escape(this.infos.target || '')}" target="_blank">${this._escape(this.infos.target || '')}</a></p>
+                </div>
+                <div class="dash-meta">
+                    <p>Generated: ${new Date().toLocaleString()}</p>
+                </div>
             </div>
-        </section>
+            
+            <div class="dash-stats">
+                <div class="stat-box vulns">
+                    <h3>Vulnerabilities</h3>
+                    <div class="num">${vulnCount}</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Anomalies</h3>
+                    <div class="num">${anomalyCount}</div>
+                </div>
+                <div class="stat-box">
+                    <h3>Risk Level</h3>
+                    <div class="num">${vulnCount > 0 ? 'CRITICAL' : (anomalyCount > 0 ? 'LOW' : 'SAFE')}</div>
+                </div>
+            </div>
+        </div>
 
-        <section class="vulnerabilities">
-            <h2>Vulnerabilities</h2>
-            ${vulnSections || '<p>No vulnerabilities found.</p>'}
-        </section>
-
-        <section class="anomalies">
-            <h2>Anomalies</h2>
-            ${anomalySections || '<p>No anomalies found.</p>'}
-        </section>
+        ${vulnCount > 0 ? vulnSections : ''}
+        ${anomalyCount > 0 ? anomalySections : ''}
+        ${(vulnCount === 0 && anomalyCount === 0) ? '<div class="no-issues">No vulnerabilities or anomalies were detected during the scan.</div>' : ''}
     </div>
     <script src="js/app.js"></script>
 </body>
