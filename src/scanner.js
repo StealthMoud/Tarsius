@@ -158,28 +158,37 @@ export class Tarsius {
     // the main scan loop - this is where evrything happns
     async run() {
         const startTime = Date.now();
+        const target = this.crawlerConfig.baseRequest.url;
 
-        logYellow(`[*] Scanning ${this.crawlerConfig.baseRequest.url}`);
+        logYellow(`[*] Target: ${target}`);
+        logYellow(`[*] Scope: ${this.scope.scopeType}`);
+        console.log('');
 
-        // step 1: crawl the website to find all pages
+        // step 1: crawl
         if (!this.skipCrawl) {
             await this._crawl();
             process.stdout.write('\r' + ' '.repeat(120) + '\r');
         }
 
-        const pageCount = this._crawledUrls.length;
         const crawlTime = ((Date.now() - startTime) / 1000).toFixed(1);
-        logGreen(`[*] Found ${pageCount} URLs in ${crawlTime}s`);
+        logGreen(`[*] Found ${this._crawledUrls.length} URLs in ${crawlTime}s`);
         console.log('');
 
-        // step 2: run atack modules against found pages
-        await this._attack();
+        // step 2: atack
+        const totalVulns = await this._attack();
 
-        // step 3: genrate the report
+        // step 3: report
         await this._generateReport();
 
+        // scan summary
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        logGreen(`[*] Scan completed in ${elapsed} seconds`);
+        console.log('─'.repeat(60));
+        if (totalVulns > 0) {
+            logRed(`[!] ${totalVulns} vulnerabilit${totalVulns === 1 ? 'y' : 'ies'} found`);
+        } else {
+            logGreen('[*] No vulnerabilities found');
+        }
+        logGreen(`[*] ${this._crawledUrls.length} URLs scanned in ${elapsed}s`);
     }
 
     // crawl the target websit to discover pages and forms
@@ -283,13 +292,16 @@ export class Tarsius {
     async _attack() {
         if (this._crawledUrls.length === 0) {
             logYellow('[*] No pages to atack');
-            return;
+            return 0;
         }
+
+        let totalVulns = 0;
 
         // run passive checks on already-crawled respons (no extra requests)
         try {
             const passiveScanner = new PassiveScanner();
             await passiveScanner.run(this._crawledUrls);
+            totalVulns += passiveScanner.anomalies.length;
         } catch (err) {
             logVerbose(`passive scanner error: ${err.message}`);
         }
@@ -309,12 +321,10 @@ export class Tarsius {
 
         // run active atack modules
         const activeScanner = new ActiveScanner(crawler, null, attackOptions, this.crawlerConfig);
-        await activeScanner.run(requests, this._modules);
-
-        // collect vulns from the active scanner
-        // the modules log vulns directly so we grab them from the module output
+        totalVulns += await activeScanner.run(requests, this._modules);
 
         await crawler.close();
+        return totalVulns;
     }
 
     // generate the scan report
