@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title : 'vulnstore ecommerce' %></title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0; padding: 0; background: #fdfdfd; color: #333; }
+        header { background: #1a1a1a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: #fff; text-decoration: none; margin-left: 1rem; }
+        nav a:hover { text-decoration: underline; }
+        main { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .card { border: 1px solid #eee; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; background: white; }
+        input, button { padding: 0.5rem; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h2><a href="/" style="color:white;text-decoration:none;">vulnstore</a></h2>
+    </div>
+    <nav>
+        <a href="/">home</a>
+        <a href="/products">catalog</a>
+        <% if (user) { %>
+            <a href="/api/messages/<%= user.id %>">profile</a>
+            <a href="/auth/logout">logout (<%= user.username %>)</a>
+        <% } else { %>
+            <a href="/auth/login">login</a>
+        <% } %>
+    </nav>
+</header>
+<main>

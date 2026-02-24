@@ -1,0 +1,25 @@
+<%- include('../layout/header') %>
+
+    <div class="card" style="max-width: 400px; margin: 2rem auto;">
+        <h2>login to vulnstore</h2>
+
+        <% if (typeof error !=='undefined' ) { %>
+            <p style="color: red;">
+                <%= error %>
+            </p>
+            <% } %>
+
+                <form action="/auth/login" method="post">
+                    <div>
+                        <label>username:</label><br />
+                        <input type="text" name="username" style="width: 100%;" />
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <label>password:</label><br />
+                        <input type="password" name="password" style="width: 100%;" />
+                    </div>
+                    <button type="submit" style="width: 100%; background: #1a1a1a; color: white;">login</button>
+                </form>
+    </div>
+
+    <%- include('../layout/footer') %>

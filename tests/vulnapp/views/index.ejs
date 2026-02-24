@@ -1,0 +1,34 @@
+<%- include('layout/header') %>
+
+    <h1>welcome to vulnstore</h1>
+    <p>
+        <%= message %>
+    </p>
+
+    <div class="card">
+        <h3>search products</h3>
+        <form action="/products" method="get">
+            <input type="text" name="search" placeholder="search..." />
+            <button type="submit">search</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>fetch avatar from external site</h3>
+        <p>test our new proxy feature!</p>
+        <form action="/api/avatar/fetch" method="get">
+            <input type="text" name="url" placeholder="http://example.com" value="http://example.com"
+                style="width: 300px;" />
+            <button type="submit">fetch avatar</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>update profile picture</h3>
+        <form action="/api/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="profile_pic" />
+            <button type="submit">upload picture</button>
+        </form>
+    </div>
+
+    <%- include('layout/footer') %>
