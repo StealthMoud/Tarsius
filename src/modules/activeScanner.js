@@ -52,27 +52,27 @@ export class ActiveScanner {
         this.crawlerConfig = crawlerConfig;
     }
 
-    // run all the atack modules
+    // run all the atack modules - now with inter-modul concurency!
     async run(requests, moduleNames = null) {
+        const { pMap } = await import('../utils/concurrency.js');
         const modulesToRun = moduleNames || DEFAULT_MODULES;
         let totalVulns = 0;
 
-        logYellow(`[*] Attacking ${requests.length} URLs with ${modulesToRun.length} modules`);
+        logYellow(`[*] Attacking ${requests.length} URLs with ${modulesToRun.length} modules (parallel execution)`);
         console.log('');
 
-        for (let i = 0; i < modulesToRun.length; i++) {
-            const modName = modulesToRun[i];
+        // run up to 3 modules at a time
+        await pMap(modulesToRun, async (modName, i) => {
             const modStart = Date.now();
-
-            process.stdout.write(`[*] [${i + 1}/${modulesToRun.length}] ${modName}...`);
+            const modIndex = i + 1;
 
             try {
                 const loader = MODULE_MAP[modName];
-                if (!loader) continue;
+                if (!loader) return;
 
                 const mod = await loader();
                 const ModClass = mod.default || mod[Object.keys(mod)[0]];
-                if (!ModClass) continue;
+                if (!ModClass) return;
 
                 const instance = new ModClass(
                     this.crawler,
@@ -81,27 +81,24 @@ export class ActiveScanner {
                     this.crawlerConfig
                 );
 
+                // each module handles its own internal concurency
                 await instance.launch(requests);
 
                 const elapsed = ((Date.now() - modStart) / 1000).toFixed(1);
-                process.stdout.write('\r' + ' '.repeat(120) + '\r');
                 if (instance._foundVulns > 0) {
                     totalVulns += instance._foundVulns;
-                    logRed(`[!] [${i + 1}/${modulesToRun.length}] ${modName}: ${instance._foundVulns} issue(s) (${elapsed}s)`);
+                    logRed(`[!] [${modIndex}/${modulesToRun.length}] ${modName}: ${instance._foundVulns} issue(s) (${elapsed}s)`);
                 } else {
-                    console.log(`[*] [${i + 1}/${modulesToRun.length}] ${modName}: clean (${elapsed}s)`);
+                    console.log(`[*] [${modIndex}/${modulesToRun.length}] ${modName}: clean (${elapsed}s)`);
                 }
             } catch (error) {
-                // silently skip modules that arnt implemented yet
                 if (error.code === 'ERR_MODULE_NOT_FOUND') {
-                    process.stdout.write('\r' + ' '.repeat(120) + '\r');
-                    console.log(`[*] [${i + 1}/${modulesToRun.length}] ${modName}: skipped`);
+                    console.log(`[*] [${modIndex}/${modulesToRun.length}] ${modName}: skipped (not implemented)`);
                 } else {
-                    process.stdout.write('\r' + ' '.repeat(120) + '\r');
-                    logVerbose(`[*] [${i + 1}/${modulesToRun.length}] ${modName}: error - ${error.message}`);
+                    logVerbose(`[*] [${modIndex}/${modulesToRun.length}] ${modName}: error - ${error.message}`);
                 }
             }
-        }
+        }, 3);
 
         console.log('');
         return totalVulns;
