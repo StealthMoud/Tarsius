@@ -7,6 +7,10 @@ import { logGreen, logRed, logYellow, logVerbose } from './utils/log.js';
 import { TARSIUS_VERSION } from './index.js';
 import { sendRequest, fetchWithRedirects } from './http/client.js';
 import { Request } from './http/request.js';
+import { AsyncCrawler } from './crawler/crawler.js';
+import { ActiveScanner } from './modules/activeScanner.js';
+import { PassiveScanner } from './modules/passiveScanner.js';
+import { getReportGenerator } from './reports/index.js';
 
 // scan force presets - controls how agresive the scan is
 const SCAN_FORCE_VALUES = {
@@ -206,7 +210,8 @@ export class Tarsius {
 
                 if (!response) continue;
 
-                // store the crawled url
+                // store the crawled url with an id so atack modules can track it
+                request.pathId = visited.size;
                 this._crawledUrls.push({
                     request,
                     response,
@@ -256,21 +261,40 @@ export class Tarsius {
 
     // run all the atack modules
     async _attack() {
-        // todo: load and run actual atack modules
-        // for now just log that we would atack
-
-        const moduleList = this._modules || [
-            'upload', 'xss', 'exec', 'file', 'redirect', 'sql', 'ssrf', 'ssl', 'permanentxss'
-        ];
-
-        for (let i = 0; i < moduleList.length; i++) {
-            const modName = moduleList[i];
-            console.log(`[*] [Module ${i + 1}/${moduleList.length}] Launching ${modName}...`);
-
-            // todo: actually run the module
-            logVerbose(`  module ${modName} would scan ${this._crawledUrls.length} pages`);
-            console.log('');
+        if (this._crawledUrls.length === 0) {
+            logYellow('[*] No pages to atack');
+            return;
         }
+
+        // create a crawlr for sending atack requests
+        const crawler = new AsyncCrawler(this.crawlerConfig);
+
+        // pull out just the request objects for the modules
+        const requests = this._crawledUrls.map(u => u.request);
+
+        const attackOptions = {
+            level: this.attackLevel,
+            maxAttackTime: this.maxAttackTime,
+            skippedParams: this._skippedParams,
+            timeout: this.crawlerConfig.timeout,
+        };
+
+        // run passive checks first (headers, cookies, etc)
+        try {
+            const passiveScanner = new PassiveScanner(crawler, null, attackOptions, this.crawlerConfig);
+            await passiveScanner.launch(requests);
+        } catch (err) {
+            logVerbose(`passive scanner error: ${err.message}`);
+        }
+
+        // run active atack modules
+        const activeScanner = new ActiveScanner(crawler, null, attackOptions, this.crawlerConfig);
+        await activeScanner.run(requests, this._modules);
+
+        // collect vulns from the active scanner
+        // the modules log vulns directly so we grab them from the module output
+
+        await crawler.close();
     }
 
     // generate the scan report
@@ -284,19 +308,47 @@ export class Tarsius {
         const fileName = `${hostname}_${dateStr}.${this.reportFormat}`;
         const outputPath = path.join(outputDir, fileName);
 
-        // todo: use the real report generatrs
-        // for now just write a basic json report
-        const reportData = {
-            version: TARSIUS_VERSION,
-            target: this.crawlerConfig.baseRequest.url,
-            date: now.toISOString(),
-            crawled_urls: this._crawledUrls.length,
-            vulnerabilities: this._vulnerabilities,
-            anomalies: this._anomalies,
-            additionals: this._additionals,
-        };
+        try {
+            const generator = getReportGenerator(this.reportFormat);
 
-        fs.writeFileSync(outputPath, JSON.stringify(reportData, null, 2));
+            // feed scan metadata
+            generator.setInfo('version', TARSIUS_VERSION);
+            generator.setInfo('target', this.crawlerConfig.baseRequest.url);
+            generator.setInfo('date', now.toISOString());
+            generator.setInfo('crawled_urls', this._crawledUrls.length);
+
+            // feed vulns and anomalies
+            for (const [cat, items] of Object.entries(this._vulnerabilities)) {
+                for (const item of (Array.isArray(items) ? items : [items])) {
+                    generator.addVulnerability(cat, item);
+                }
+            }
+            for (const [cat, items] of Object.entries(this._anomalies)) {
+                for (const item of (Array.isArray(items) ? items : [items])) {
+                    generator.addAnomaly(cat, item);
+                }
+            }
+            for (const [cat, items] of Object.entries(this._additionals)) {
+                for (const item of (Array.isArray(items) ? items : [items])) {
+                    generator.addAdditional(cat, item);
+                }
+            }
+
+            generator.generate(outputPath);
+        } catch (err) {
+            // fallback to basic json if report genertor fails
+            logVerbose(`report genertor error: ${err.message}, falling back to json`);
+            const reportData = {
+                version: TARSIUS_VERSION,
+                target: this.crawlerConfig.baseRequest.url,
+                date: now.toISOString(),
+                crawled_urls: this._crawledUrls.length,
+                vulnerabilities: this._vulnerabilities,
+                anomalies: this._anomalies,
+                additionals: this._additionals,
+            };
+            fs.writeFileSync(outputPath, JSON.stringify(reportData, null, 2));
+        }
 
         console.log(`A report has been generated in the file ${outputDir}`);
         console.log(`Open ${outputPath} with a browser to see this report.`);
