@@ -64,7 +64,7 @@ function createProgram() {
         .option('--max-attack-time <seconds>', 'max time per atack module')
 
         // concurency
-        .option('--tasks <n>', 'concurent tasks for crawling', '16')
+        .option('--threads <n>', 'concurrent threads for crawling and attacking', '16')
 
         // request setings
         .option('-t, --timeout <seconds>', 'request timout in seconds', '5')
@@ -155,7 +155,7 @@ export async function tarsiusMain() {
         tarsius.reportFormat = opts.format;
         tarsius.maxDepth = parseInt(opts.depth, 10);
         tarsius.maxLinksPerPage = parseInt(opts.maxLinksPerPage, 10);
-        tarsius.concurrentTasks = parseInt(opts.tasks, 10);
+        tarsius.threads = parseInt(opts.threads, 10);
 
         if (opts.maxScanTime) tarsius.maxScanTime = parseFloat(opts.maxScanTime);
         if (opts.maxAttackTime) tarsius.maxAttackTime = parseFloat(opts.maxAttackTime);

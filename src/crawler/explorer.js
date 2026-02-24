@@ -18,7 +18,7 @@ export class Explorer {
         this.maxDepth = 40;
         this.maxLinksPerPage = 100;
         this.maxFilesPerDir = 0;
-        this.concurrentTasks = 32;
+        this.threads = 32;
         this.maxScanTime = null;
         this.excludedUrls = [];
         this.excludedParams = [];
@@ -62,7 +62,7 @@ export class Explorer {
             }
 
             // process a batch of urls concurently
-            const batch = this._queue.splice(0, this.concurrentTasks);
+            const batch = this._queue.splice(0, this.threads);
             const promises = batch.map(req => this._processUrl(crawler, req));
             await Promise.allSettled(promises);
         }

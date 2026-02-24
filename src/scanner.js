@@ -34,7 +34,7 @@ export class Tarsius {
         this.maxDepth = 10;
         this.maxLinksPerPage = 100;
         this.maxFilesPerDir = 0;
-        this.concurrentTasks = 16;
+        this.threads = 16;
         this.maxScanTime = null;
         this.maxAttackTime = null;
         this.maxParameters = 0;
@@ -239,7 +239,7 @@ export class Tarsius {
 
     // crawl the target websit to discover pages and forms
     async _crawl() {
-        logYellow('[*] Crawling target...');
+        logYellow(`[*] Crawling target using ${this.threads} threads...`);
 
         // start with the base url
         const urlsToVisit = [this.crawlerConfig.baseRequest.url];
@@ -253,7 +253,7 @@ export class Tarsius {
         while (urlsToVisit.length > 0) {
             // grab a batch of unvisited urls
             const batch = [];
-            while (batch.length < this.concurrentTasks && urlsToVisit.length > 0) {
+            while (batch.length < this.threads && urlsToVisit.length > 0) {
                 const url = urlsToVisit.shift();
                 if (visited.has(url)) continue;
                 if (!this.scope.check(url)) continue;
@@ -439,9 +439,12 @@ export class Tarsius {
             maxAttackTime: this.maxAttackTime || dynamicTimeout,
             skippedParams: this._skippedParams,
             timeout: this.crawlerConfig.timeout,
+            threads: this.threads,
         };
 
         // run active atack modules
+        const modCount = this._modules ? this._modules.length : 'all active';
+        logYellow(`[*] Attacking ${requests.length} URLs with ${modCount} modules using ${this.threads} threads`);
         const activeScanner = new ActiveScanner(crawler, this, attackOptions, this.crawlerConfig);
         await activeScanner.run(requests, this._modules);
 

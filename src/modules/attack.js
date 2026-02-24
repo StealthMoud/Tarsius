@@ -6,8 +6,7 @@ import { Request } from '../http/request.js';
 import { parseIniPayloads, getPayloadPath } from '../parsers/iniPayloadParser.js';
 import { parseTxtPayloads } from '../parsers/txtPayloadParser.js';
 
-// how many payloads to send at once per url
-const PAYLOAD_CONCURRENCY = 20;
+// payloads are now batched via options.threads
 
 export class Attack {
     // crawler = AsyncCrawler instance
@@ -148,12 +147,13 @@ export class Attack {
         if (mutations.length === 0) return;
 
         const foundParams = new Set();
+        const numThreads = this.options.threads || 16;
         let i = 0;
 
         while (i < mutations.length && !this._isTimeUp()) {
             // grab a batch
-            const batch = mutations.slice(i, i + PAYLOAD_CONCURRENCY);
-            i += PAYLOAD_CONCURRENCY;
+            const batch = mutations.slice(i, i + numThreads);
+            i += numThreads;
 
             const results = await Promise.allSettled(
                 batch.map(async (mutation) => {
