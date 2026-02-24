@@ -71,6 +71,7 @@ export class Tarsius {
         this._anomalies = {};
         this._additionals = {};
         this._crawledUrls = [];
+        this._discoveredRequests = [];
         this._attackedUrls = new Set();
     }
 
@@ -145,7 +146,38 @@ export class Tarsius {
         this._cms = cms;
     }
 
-    // get the default output directry
+    // save a found vulnerabilty or anomly to our results
+    saveVulnerability(pathId, moduleName, category, level, parameter, info, type = 'vulnerability', wstg = '') {
+        const item = {
+            pathId,
+            moduleName,
+            category,
+            level,
+            parameter,
+            info,
+            wstg,
+            timestamp: new Date().toISOString(),
+        };
+
+        if (type === 'anomaly') {
+            if (!this._anomalies[category]) this._anomalies[category] = [];
+            this._anomalies[category].push(item);
+        } else {
+            if (!this._vulnerabilities[category]) this._vulnerabilities[category] = [];
+            this._vulnerabilities[category].push(item);
+        }
+    }
+
+    // placeholder - real persister will use sqlite
+    hasBeenAttacked(pathId, moduleName) {
+        return this._attackedUrls.has(`${pathId}:${moduleName}`);
+    }
+
+    markAsAttacked(pathId, moduleName) {
+        this._attackedUrls.add(`${pathId}:${moduleName}`);
+    }
+
+    // helper to find where to save the report
     _getOutputDir() {
         if (this.outputFile) return this.outputFile;
         const homeDir = os.homedir();
@@ -246,8 +278,14 @@ export class Tarsius {
                 request.pathId = ++pathIdCounter;
                 this._crawledUrls.push({ request, response });
 
-                // extract links from the page
-                const links = this._extractLinks(response.content, request.url);
+                // extract links and forms from the page
+                const { links, requests } = this._extractLinks(response.content, request.url);
+
+                // add forms to discovered requests
+                for (const discovered of requests) {
+                    this._discoveredRequests.push(discovered);
+                }
+
                 for (const link of links) {
                     if (!visited.has(link) && this.scope.check(link)) {
                         urlsToVisit.push(link);
@@ -266,15 +304,17 @@ export class Tarsius {
         }
     }
 
-    // fast and accurate link extracton using cheerio
+    // fast and accurate link and form extracton using cheerio
+    // returns { links, requests }
     _extractLinks(html, baseUrl) {
         const links = new Set();
-        if (!html) return links;
+        const requests = [];
+        if (!html) return { links, requests };
 
         try {
             const $ = cheerio.load(html);
 
-            // find all links in href and src attributes
+            // 1. find all links in href and src attributes
             $('a[href], link[href], iframe[src], script[src]').each((_, el) => {
                 const attr = $(el).attr('href') || $(el).attr('src');
                 if (!attr) return;
@@ -283,17 +323,54 @@ export class Tarsius {
                     const absUrl = new URL(attr, baseUrl).href;
                     // only keep http/https links
                     if (absUrl.startsWith('http://') || absUrl.startsWith('https://')) {
-                        links.add(absUrl.split('#')[0]); // remove fragments
+                        const cleanUrl = absUrl.split('#')[0];
+                        links.add(cleanUrl);
+                        requests.push(new Request(absUrl, { referer: baseUrl }));
                     }
                 } catch {
                     // skip invalid urls
+                }
+            });
+
+            // 2. find forms and their parameters
+            $('form').each((_, el) => {
+                const $form = $(el);
+                const action = $form.attr('action') || '';
+                const method = ($form.attr('method') || 'GET').toUpperCase();
+                const enctype = $form.attr('enctype') || 'application/x-www-form-urlencoded';
+
+                try {
+                    const absAction = new URL(action, baseUrl).href;
+                    const params = [];
+
+                    $form.find('input, textarea, select').each((_, input) => {
+                        const $input = $(input);
+                        const name = $input.attr('name');
+                        if (!name) return;
+
+                        const value = $input.attr('value') || '';
+                        params.push([name, value]);
+                    });
+
+                    // only add if it has paramters (otherwise its just a link)
+                    if (params.length > 0) {
+                        const formReq = new Request(absAction, {
+                            method,
+                            [method === 'POST' ? 'postParams' : 'getParams']: params,
+                            enctype,
+                            referer: baseUrl,
+                        });
+                        requests.push(formReq);
+                    }
+                } catch {
+                    // skip bad form actions
                 }
             });
         } catch (err) {
             logVerbose(`cheerio parsing error: ${err.message}`);
         }
 
-        return links;
+        return { links, requests };
     }
 
     // run all the atack modules
@@ -307,9 +384,8 @@ export class Tarsius {
 
         // run passive checks on already-crawled respons (no extra requests)
         try {
-            const passiveScanner = new PassiveScanner();
+            const passiveScanner = new PassiveScanner(this);
             await passiveScanner.run(this._crawledUrls);
-            totalVulns += passiveScanner.anomalies.length;
         } catch (err) {
             logVerbose(`passive scanner error: ${err.message}`);
         }
@@ -317,19 +393,42 @@ export class Tarsius {
         // create a crawlr for sending atack requests
         const crawler = new AsyncCrawler(this.crawlerConfig);
 
-        // pull out just the request objects for the modules
-        const requests = this._crawledUrls.map(u => u.request);
+        // pull out all unique requests for the modules
+        // combine already-crawled requests and discovered forms/links
+        const allRequests = new Map();
+
+        // 1. add already crawled ones
+        for (const { request } of this._crawledUrls) {
+            allRequests.set(request.hash(), request);
+        }
+
+        // 2. add discovered forms/links (ensuring pathId is set for tracking)
+        let pathIdCounter = this._crawledUrls.length;
+        for (const request of this._discoveredRequests) {
+            if (!request.pathId) request.pathId = ++pathIdCounter;
+            const h = request.hash();
+            if (!allRequests.has(h)) {
+                allRequests.set(h, request);
+            }
+        }
+
+        const requests = Array.from(allRequests.values());
 
         const attackOptions = {
             level: this.attackLevel,
-            maxAttackTime: this.maxAttackTime || 30, // default 30s per module
+            maxAttackTime: this.maxAttackTime || 60, // doubled timeout to 60s per module
             skippedParams: this._skippedParams,
             timeout: this.crawlerConfig.timeout,
         };
 
         // run active atack modules
-        const activeScanner = new ActiveScanner(crawler, null, attackOptions, this.crawlerConfig);
-        totalVulns += await activeScanner.run(requests, this._modules);
+        const activeScanner = new ActiveScanner(crawler, this, attackOptions, this.crawlerConfig);
+        await activeScanner.run(requests, this._modules);
+
+        // total vulns = active + passive
+        const totalVulnerabilities = Object.values(this._vulnerabilities).flat().length;
+        const totalAnomalies = Object.values(this._anomalies).flat().length;
+        totalVulns = totalVulnerabilities + totalAnomalies;
 
         await crawler.close();
         return totalVulns;
