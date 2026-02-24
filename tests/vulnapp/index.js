@@ -19,6 +19,9 @@ db.serialize(() => {
 
 // --- INDEX PAGE (Discovery ground for the crawler) ---
 app.get('/', (req, res) => {
+    // Set an insecure cookie for the passive scanner to detect
+    res.cookie('session_id', '1234567890');
+
     res.send(`
         <html>
         <head><title>Vulnerable App Demo</title></head>
@@ -53,15 +56,38 @@ app.get('/', (req, res) => {
                 <button type="submit">Fetch URL</button>
             </form>
             
-            <h2>7. Weak Login</h2>
+            <h2>7. Weak Login & CSRF</h2>
             <form action="/login" method="POST">
                 Username: <input type="text" name="username" /><br/>
                 Password: <input type="password" name="password" /><br/>
                 <button type="submit">Login</button>
             </form>
+
+            <h2>8. XML External Entity (XXE)</h2>
+            <form action="/xxe" method="POST" enctype="application/xml">
+                <textarea name="xmlData" rows="5" cols="40">&lt;xml&gt;&lt;test&gt;data&lt;/test&gt;&lt;/xml&gt;</textarea><br/>
+                <button type="submit">Send XML</button>
+            </form>
+
+            <h2>9. Unrestricted File Upload</h2>
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+                <input type="file" name="uploaded_file" />
+                <button type="submit">Upload</button>
+            </form>
+
+            <h2>10. CRLF Injection (HTTP Response Splitting)</h2>
+            <p>Test CRLF: <a href="/crlf?lang=en">Language Selection</a></p>
+
+            <h2>11. Backup Files</h2>
+            <p>Source is running at <code>/index.js</code>. The scanner will look for <code>/index.js.bak</code></p>
         </body>
         </html>
     `);
+});
+
+// A mock backup file route
+app.get('/index.js.bak', (req, res) => {
+    res.send('// This is a backup of the source code\\nconst express = require("express");');
 });
 
 // --- VULNERABLE ENDPOINTS ---
@@ -155,6 +181,49 @@ app.post('/login', (req, res) => {
             res.send("Login Failed - Incorrect Username or Password");
         }
     });
+});
+
+// 8. XXE (XML External Entity) Mock
+app.post('/xxe', (req, res) => {
+    let xmlData = '';
+    req.on('data', chunk => xmlData += chunk.toString());
+    req.on('end', () => {
+        // If the payload contains typical XXE markers, simulate a successful exploitation
+        if (xmlData.includes('ENTITY') && xmlData.includes('SYSTEM')) {
+            return res.send("Parsed XML Output: root:x:0:0:root:/root:/bin/bash");
+        }
+        res.send("Parsed XML Output: " + xmlData);
+    });
+});
+
+// 9. UNRESTRICTED FILE UPLOAD Mock
+app.post('/upload', (req, res) => {
+    // We just need to accept the multipart form
+    res.send("File uploaded successfully.");
+});
+
+// 10. CRLF INJECTION
+app.get('/crlf', (req, res) => {
+    const lang = req.query.lang || 'en';
+
+    // Node.js normally blocks HTTP response splitting. 
+    // To make this explicitly vulnerable and demonstrable for Tarsius,
+    // we hijack the raw socket to respond with the injected headers.
+    if (lang.includes('%0d%0a') || lang.includes('\\r\\n')) {
+        const decodedLang = decodeURIComponent(lang);
+        const rawResponse =
+            "HTTP/1.1 200 OK\\r\\n" +
+            "Content-Type: text/html\\r\\n" +
+            "X-Language: " + decodedLang + "\\r\\n" +
+            "Connection: close\\r\\n\\r\\n" +
+            "<h1>Language selected</h1>";
+
+        req.socket.write(rawResponse);
+        req.socket.end();
+    } else {
+        res.set('X-Language', lang);
+        res.send("<h1>Language selected: " + lang + "</h1>");
+    }
 });
 
 app.listen(port, () => {
