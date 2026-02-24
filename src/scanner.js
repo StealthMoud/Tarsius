@@ -414,9 +414,14 @@ export class Tarsius {
 
         const requests = Array.from(allRequests.values());
 
+        // Calculate a reasonable dynamic timeout if the user didn't specify one
+        // Base 60s + 3s per request, capped at 10 minutes (600s) per module
+        let dynamicTimeout = 60 + (requests.length * 3);
+        if (dynamicTimeout > 600) dynamicTimeout = 600;
+
         const attackOptions = {
             level: this.attackLevel,
-            maxAttackTime: this.maxAttackTime || 60, // doubled timeout to 60s per module
+            maxAttackTime: this.maxAttackTime || dynamicTimeout,
             skippedParams: this._skippedParams,
             timeout: this.crawlerConfig.timeout,
         };
