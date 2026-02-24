@@ -39,10 +39,15 @@ export class Attack {
     // main entry point - goes through all urls and atacks them
     async launch(requests) {
         this._startTime = Date.now();
+        const total = requests.length;
 
-        logYellow(`[*] Launching module ${this.moduleName}`);
+        for (let i = 0; i < total; i++) {
+            const request = requests[i];
 
-        for (const request of requests) {
+            // show progress
+            const shortUrl = request.url.length > 60 ? request.url.substring(0, 57) + '...' : request.url;
+            process.stdout.write(`\r    [${i + 1}/${total}] ${shortUrl}`.padEnd(100));
+
             // check if we already atacekd this one
             if (this.persister && this.persister.hasBeenAttacked(request.pathId, this.moduleName)) {
                 continue;
@@ -50,7 +55,7 @@ export class Attack {
 
             // check time limit
             if (this._isTimeUp()) {
-                logYellow(`[*] Time limit reached for module ${this.moduleName}`);
+                logYellow(`\n[*] Time limit reached for ${this.moduleName}`);
                 break;
             }
 
@@ -65,10 +70,6 @@ export class Attack {
             } catch (error) {
                 logVerbose(`error in ${this.moduleName} on ${request.url}: ${error.message}`);
             }
-        }
-
-        if (this._foundVulns > 0) {
-            logRed(`[!] ${this._foundVulns} vulnerabilities found by ${this.moduleName}`);
         }
     }
 

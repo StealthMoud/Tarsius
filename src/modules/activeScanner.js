@@ -1,7 +1,7 @@
 // loads and runs atack modules
 
 import path from 'path';
-import { logYellow, logGreen, logVerbose } from '../utils/log.js';
+import { logYellow, logRed, logGreen, logVerbose } from '../utils/log.js';
 
 // all availble active atack modules
 // each modul is lazy loaded when needed
@@ -56,9 +56,14 @@ export class ActiveScanner {
     async run(requests, moduleNames = null) {
         const modulesToRun = moduleNames || DEFAULT_MODULES;
 
+        logYellow(`[*] Attacking ${requests.length} URLs with ${modulesToRun.length} modules`);
+        console.log('');
+
         for (let i = 0; i < modulesToRun.length; i++) {
             const modName = modulesToRun[i];
-            console.log(`[*] [Module ${i + 1}/${modulesToRun.length}] Launching ${modName}...`);
+            const modStart = Date.now();
+
+            console.log(`[*] [${i + 1}/${modulesToRun.length}] ${modName}...`);
 
             try {
                 const loader = MODULE_MAP[modName];
@@ -83,17 +88,24 @@ export class ActiveScanner {
                 );
 
                 await instance.launch(requests);
+
+                const elapsed = ((Date.now() - modStart) / 1000).toFixed(1);
+                process.stdout.write('\r' + ' '.repeat(120) + '\r');
+                if (instance._foundVulns > 0) {
+                    logRed(`    found ${instance._foundVulns} issue(s) in ${elapsed}s`);
+                } else {
+                    logVerbose(`    clean (${elapsed}s)`);
+                }
             } catch (error) {
-                // modul not found yet - thats ok, we'll add them gradully
                 if (error.code === 'ERR_MODULE_NOT_FOUND') {
                     logVerbose(`module "${modName}" not implementd yet`);
                 } else {
                     logVerbose(`error in module "${modName}": ${error.message}`);
                 }
             }
-
-            console.log('');
         }
+
+        console.log('');
     }
 
     // list all availble modules

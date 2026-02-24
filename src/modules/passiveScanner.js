@@ -11,9 +11,14 @@ export class PassiveScanner extends Attack {
 
     // check all discovery pages for passive issues
     async launch(requests) {
-        logYellow('[*] Running passive checks...');
+        console.log('[*] Running passive checks...');
+        const total = requests.length;
 
-        for (const request of requests) {
+        for (let i = 0; i < total; i++) {
+            const request = requests[i];
+            const shortUrl = request.url.length > 60 ? request.url.substring(0, 57) + '...' : request.url;
+            process.stdout.write(`\r    [${i + 1}/${total}] ${shortUrl}`.padEnd(100));
+
             try {
                 const response = await this.crawler.get(request);
                 if (!response) continue;
@@ -25,6 +30,7 @@ export class PassiveScanner extends Attack {
                 logVerbose(`passive check error on ${request.url}: ${error.message}`);
             }
         }
+        process.stdout.write('\r' + ' '.repeat(100) + '\r');
     }
 
     // check for missing securty headers
