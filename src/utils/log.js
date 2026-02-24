@@ -3,16 +3,17 @@ import chalk from 'chalk';
 // colored loging helpers
 
 const LOG_LEVELS = {
-    QUIET: 0,
-    INFO: 1,
-    VERBOSE: 2,
+    QUIET: -1,
+    INFO: 0,
+    VERBOSE: 1,
+    DEBUG: 2,
 };
 
 let currentLevel = LOG_LEVELS.INFO;
 let logFile = null;
 
 // set how noisy the output is
-// 0=quiet, 1=normal, 2=everthing
+// -1=quiet, 0=normal, 1=noisy, 2=everthing
 export function setVerbosity(level) {
     currentLevel = level;
 }
