@@ -7,7 +7,7 @@ import { parseIniPayloads, getPayloadPath } from '../parsers/iniPayloadParser.js
 import { parseTxtPayloads } from '../parsers/txtPayloadParser.js';
 
 // how many payloads to send at once per url
-const PAYLOAD_CONCURRENCY = 10;
+const PAYLOAD_CONCURRENCY = 20;
 
 export class Attack {
     // crawler = AsyncCrawler instance

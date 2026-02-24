@@ -30,10 +30,10 @@ export class Tarsius {
         // atack settings
         this.attackLevel = 1;
         this.reportFormat = 'html';
-        this.maxDepth = 40;
+        this.maxDepth = 10;
         this.maxLinksPerPage = 100;
         this.maxFilesPerDir = 0;
-        this.concurrentTasks = 32;
+        this.concurrentTasks = 16;
         this.maxScanTime = null;
         this.maxAttackTime = null;
         this.maxParameters = 0;
@@ -286,6 +286,14 @@ export class Tarsius {
             return;
         }
 
+        // run passive checks on already-crawled respons (no extra requests)
+        try {
+            const passiveScanner = new PassiveScanner();
+            await passiveScanner.run(this._crawledUrls);
+        } catch (err) {
+            logVerbose(`passive scanner error: ${err.message}`);
+        }
+
         // create a crawlr for sending atack requests
         const crawler = new AsyncCrawler(this.crawlerConfig);
 
@@ -294,18 +302,10 @@ export class Tarsius {
 
         const attackOptions = {
             level: this.attackLevel,
-            maxAttackTime: this.maxAttackTime || 60, // default 60s per module
+            maxAttackTime: this.maxAttackTime || 30, // default 30s per module
             skippedParams: this._skippedParams,
             timeout: this.crawlerConfig.timeout,
         };
-
-        // run passive checks first (headers, cookies, etc)
-        try {
-            const passiveScanner = new PassiveScanner(crawler, null, attackOptions, this.crawlerConfig);
-            await passiveScanner.launch(requests);
-        } catch (err) {
-            logVerbose(`passive scanner error: ${err.message}`);
-        }
 
         // run active atack modules
         const activeScanner = new ActiveScanner(crawler, null, attackOptions, this.crawlerConfig);

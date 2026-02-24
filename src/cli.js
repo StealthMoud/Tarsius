@@ -58,16 +58,16 @@ function createProgram() {
         .option('--skip <params...>', 'skip atacking these paramters')
 
         // limits
-        .option('-d, --depth <depth>', 'max crawl depth', '40')
+        .option('-d, --depth <depth>', 'max crawl depth', '10')
         .option('--max-links-per-page <max>', 'max links to extract per page', '100')
         .option('--max-scan-time <seconds>', 'max total scan time in seconds')
         .option('--max-attack-time <seconds>', 'max time per atack module')
 
         // concurency
-        .option('--tasks <n>', 'concurent tasks for crawling', '32')
+        .option('--tasks <n>', 'concurent tasks for crawling', '16')
 
         // request setings
-        .option('-t, --timeout <seconds>', 'request timout in seconds', '10')
+        .option('-t, --timeout <seconds>', 'request timout in seconds', '5')
         .option('-H, --header <headers...>', 'custm headers (e.g. "X-Api-Key: abc")')
         .option('-A, --user-agent <agent>', 'custm user agent string')
         .option('--verify-ssl', 'enable ssl certifcate checking')
