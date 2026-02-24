@@ -77,9 +77,11 @@ export class ActiveScanner {
                 const instance = new ModClass(
                     this.crawler,
                     this.persister,
-                    this.options,
+                    { ...this.options, silentProgress: true },
                     this.crawlerConfig
                 );
+
+                console.log(`[*] [${modIndex}/${modulesToRun.length}] Starting ${modName}...`);
 
                 // each module handles its own internal concurency
                 await instance.launch(requests);
