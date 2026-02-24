@@ -75,13 +75,18 @@ export class HtmlReportGenerator extends ReportGenerator {
                     <p class="solution"><strong>Solution:</strong> ${this._escape(solution)}</p>
                     <table>
                         <tr><th>URL</th><th>Parameter</th><th>Info</th></tr>
-                        ${items.map(item => `
+                        ${items.map(item => {
+                const escapedUrl = this._escape(item.url || '');
+                const escapedParam = this._escape(item.parameter || '');
+                const escapedInfo = this._escape(item.info || '');
+                return `
                             <tr>
-                                <td>${this._escape(item.url || '')}</td>
-                                <td>${this._escape(item.parameter || '')}</td>
-                                <td>${this._escape(item.info || '')}</td>
+                                <td><a href="${escapedUrl}" target="_blank">${escapedUrl}</a></td>
+                                <td><strong>${escapedParam}</strong></td>
+                                <td>${escapedInfo}</td>
                             </tr>
-                        `).join('')}
+                            `;
+            }).join('')}
                     </table>
                 </div>
             `;
@@ -94,12 +99,16 @@ export class HtmlReportGenerator extends ReportGenerator {
                     <h3>${this._escape(category)} (${items.length})</h3>
                     <table>
                         <tr><th>URL</th><th>Info</th></tr>
-                        ${items.map(item => `
+                        ${items.map(item => {
+                const escapedUrl = this._escape(item.url || '');
+                const escapedInfo = this._escape(item.info || '');
+                return `
                             <tr>
-                                <td>${this._escape(item.url || '')}</td>
-                                <td>${this._escape(item.info || '')}</td>
+                                <td><a href="${escapedUrl}" target="_blank">${escapedUrl}</a></td>
+                                <td>${escapedInfo}</td>
                             </tr>
-                        `).join('')}
+                            `;
+            }).join('')}
                     </table>
                 </div>
             `;
