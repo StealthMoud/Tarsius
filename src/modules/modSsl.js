@@ -3,12 +3,21 @@
 import https from 'https';
 import tls from 'tls';
 import { Attack } from './attack.js';
-import { logVerbose } from '../utils/log.js';
+import { logVerbose, logBlue } from '../utils/log.js';
 
 export default class ModSsl extends Attack {
     constructor(crawler, persister, options, crawlerConfig) {
         super(crawler, persister, options, crawlerConfig);
         this.moduleName = 'ssl';
+    }
+
+    async launch(requests) {
+        const hasHttps = requests.some(r => r.url.startsWith('https://'));
+        if (!hasHttps) {
+            logBlue(`[*] [${this.moduleName}] Target is HTTP-only. Skipping SSL evaluation.`);
+            return;
+        }
+        await super.launch(requests);
     }
 
     async attack(request) {

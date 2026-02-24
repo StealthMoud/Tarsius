@@ -8,6 +8,16 @@ export default class ModUpload extends Attack {
         this.moduleName = 'upload';
     }
 
+    async launch(requests) {
+        const hasUpload = requests.some(r => r.fileParams && r.fileParams.length > 0);
+        if (!hasUpload) {
+            const { logBlue } = await import('../utils/log.js');
+            logBlue(`[*] [${this.moduleName}] No file upload forms discovered. Skipping.`);
+            return;
+        }
+        await super.launch(requests);
+    }
+
     async attack(request) {
         // only check forms with file inputs
         if (!request.fileParams || request.fileParams.length === 0) return;
