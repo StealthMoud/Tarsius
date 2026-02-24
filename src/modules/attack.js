@@ -47,9 +47,11 @@ export class Attack {
         for (let i = 0; i < total; i++) {
             const request = requests[i];
 
-            // show progress
-            const shortUrl = request.url.length > 60 ? request.url.substring(0, 57) + '...' : request.url;
-            process.stdout.write(`\r    [${i + 1}/${total}] ${shortUrl}`.padEnd(100));
+            // show progress (only if not running in parallel)
+            if (!this.options.silentProgress) {
+                const shortUrl = request.url.length > 60 ? request.url.substring(0, 57) + '...' : request.url;
+                process.stdout.write(`\r    [${i + 1}/${total}] ${shortUrl}`.padEnd(100));
+            }
 
             // check if we already atacekd this one
             if (this.persister && this.persister.hasBeenAttacked(request.pathId, this.moduleName)) {
