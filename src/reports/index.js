@@ -1,5 +1,4 @@
-// report index - maps format names to their genertor classes
-// this is what the cli uses to pick the right report formt
+// report format registy
 
 import { HtmlReportGenerator } from './htmlReportGenerator.js';
 import { JsonReportGenerator } from './jsonReportGenerator.js';

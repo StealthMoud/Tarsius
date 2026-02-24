@@ -1,6 +1,4 @@
-// ini payload parser - reads atack payloads from .ini files
-// these files contain the actual strings we send to find vulnerabiltys
-// format is like: [sectionName]\npayload\npayload\n
+// reads payloads from .ini files
 
 import fs from 'fs';
 import path from 'path';

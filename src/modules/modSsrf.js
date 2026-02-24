@@ -1,5 +1,4 @@
-// ssrf module - finds server side request forgry vulnerabilitys
-// checks if paramters can make the server fetch arbitrary urls
+// server side request forgry
 
 import { Attack, Mutator } from './attack.js';
 

@@ -1,6 +1,4 @@
-// async crawler - sends http reqests with retry logic
-// wraps axios and handles timeouts, errors, ssl, proxys etc
-// this is the low level "go fetch this page" worker
+// low level page fetchr with retrys
 
 import https from 'https';
 import axios from 'axios';

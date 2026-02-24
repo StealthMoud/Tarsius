@@ -1,5 +1,4 @@
-// json report genertor - outputs scan results as structured json
-// this is the simplest report formt and good for automaton
+// json report genertor
 
 import fs from 'fs';
 import { ReportGenerator } from './reportGenerator.js';

@@ -1,6 +1,4 @@
-// explorer - discovers pages by crawling the target website
-// uses bfs (breadth first search) to find links and forms
-// this is the "go find me all the pages" module
+// bfs crawlr that finds pages and forms
 
 import { Request, makeAbsolute } from '../http/request.js';
 import { AsyncCrawler } from './crawler.js';

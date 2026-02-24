@@ -1,5 +1,4 @@
-// command executon module - finds os comand injection vulnerabilitys
-// sends payloads that try to execute comands and looks for output
+// os comand injecton checks
 
 import { Attack, Mutator } from './attack.js';
 

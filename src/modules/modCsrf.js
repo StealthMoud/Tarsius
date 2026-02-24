@@ -1,4 +1,4 @@
-// csrf module - detects forms without csrf protecton tokens
+// csrf token detecton
 
 import { Attack } from './attack.js';
 

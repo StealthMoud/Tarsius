@@ -1,5 +1,4 @@
-// redirect module - finds open redirect vulnerabilitys
-// checks if url paramters can redirect users to external sites
+// open redirect detecton
 
 import { Attack, Mutator } from './attack.js';
 

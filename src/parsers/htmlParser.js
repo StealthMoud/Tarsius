@@ -1,5 +1,4 @@
-// html parser - extracts links, forms, and other intresting stuff from html pages
-// uses cherio (jquery-like) for parsing instead of regex
+// html parser using cherio
 
 import * as cheerio from 'cheerio';
 import { makeAbsolute } from '../http/request.js';

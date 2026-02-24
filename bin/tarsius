@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-// tarsius - black box web scanner
-// this is the front door, just kicks off the main logic
+// kicks off the cli
 
 import { tarsiusMain } from '../src/cli.js';
 

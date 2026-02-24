@@ -1,5 +1,4 @@
-// request class - represents an http request we want to send or found while crawlling
-// this is the main data structre passed around between crawler, attacks, and persistance
+// http requst wrapper
 
 import { URL } from 'url';
 import { createHash } from 'crypto';

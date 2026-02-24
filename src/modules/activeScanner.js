@@ -1,5 +1,4 @@
-// active scanner - loads and runs atack modules against crawled urls
-// this is the orchestator that decides which modules to run
+// loads and runs atack modules
 
 import path from 'path';
 import { logYellow, logGreen, logVerbose } from '../utils/log.js';

@@ -1,5 +1,4 @@
-// html report genertor - makes a nice html report you can open in a browser
-// uses the report_template files for styling
+// html report genertor
 
 import fs from 'fs';
 import path from 'path';

@@ -1,5 +1,4 @@
-// auth - handles authenticaton for the scanner
-// supports http basic/digest, form login, and headless browser login
+// authenticaton helpers
 
 import { Request } from '../http/request.js';
 import { AsyncCrawler } from '../crawler/crawler.js';

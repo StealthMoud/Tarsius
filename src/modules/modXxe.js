@@ -1,5 +1,4 @@
-// xxe module - detects xml external entiy injecton
-// sends xml payloads to endponts that process xml
+// xml external entiy injecton
 
 import { Attack, Mutator } from './attack.js';
 

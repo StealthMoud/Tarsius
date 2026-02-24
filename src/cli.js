@@ -1,6 +1,4 @@
-// cli.js - the comand line interface for tarsius
-// this is where all the options you can type get parsed
-// and where the main scan seqence gets kicked off
+// cli argument parsng and main entry
 
 import { Command } from 'commander';
 import { TARSIUS_VERSION } from './index.js';

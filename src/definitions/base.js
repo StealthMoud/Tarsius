@@ -1,5 +1,4 @@
-// base finding class - all vulnerabilty definitions extend this
-// each defintion describes what a vuln is, how to fix it, and refrences
+// base vuln defintion class
 
 export class FindingBase {
     // overide these in subclases

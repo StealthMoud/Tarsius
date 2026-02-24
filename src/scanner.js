@@ -1,6 +1,4 @@
-// the main tarsius class - this is the brain of the whole operaton
-// it orchstrates crawling, attacking, and report genertion
-// think of it as the conductr of the orchstra
+// main scan orchestrtor
 
 import path from 'path';
 import os from 'os';

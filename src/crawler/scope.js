@@ -1,5 +1,4 @@
-// scope - decides which urls are "in scope" for the curent scan
-// supports: url, page, folder, subdomain, domain, punk (everthing goes)
+// url scope filtreing
 
 import { URL } from 'url';
 import psl from 'psl';

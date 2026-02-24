@@ -1,5 +1,4 @@
-// backup module - finds backup files left on the web server
-// tries comn backup file extentions and paths
+// finds backup files on the server
 
 import { Attack } from './attack.js';
 import { Request } from '../http/request.js';

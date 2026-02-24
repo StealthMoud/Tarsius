@@ -1,5 +1,4 @@
-// txt report genertor - outputs scan results as plain text
-// readable by humans without any special sofware
+// txt report genertor
 
 import fs from 'fs';
 import { ReportGenerator } from './reportGenerator.js';

@@ -1,5 +1,4 @@
-// sql injection module - finds sql injecton vulnerabilitys
-// uses error-based detecton by looking for databse error messages
+// error-based sql injecton
 
 import { Attack, Mutator } from './attack.js';
 

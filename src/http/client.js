@@ -1,6 +1,4 @@
-// web.js - the main http helper for tarsius
-// this is where all the actual reqests get sent and recieved
-// wraps axios with our cusotm config, retries, and stuff
+// sends http reqests via axios
 
 import https from 'https';
 import axios from 'axios';

@@ -1,5 +1,4 @@
-// csv report genertor - outputs scan results as comma-separated values
-// good for importing into spreadshets or other tools
+// csv report genertor
 
 import fs from 'fs';
 import { ReportGenerator } from './reportGenerator.js';

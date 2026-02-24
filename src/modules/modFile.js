@@ -1,5 +1,4 @@
-// file inclusion module - finds path traversal and file inclusion vulns
-// tests paramters with ../ and file paths to see if we can read local files
+// path traversal and file incluson
 
 import { Attack, Mutator } from './attack.js';
 

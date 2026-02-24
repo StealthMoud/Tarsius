@@ -1,6 +1,4 @@
-// all vulnerabilty definitions in one place
-// each one describes what the vuln is, how to fix it, and links to learn more
-// translted from the python definitions folder (43 files -> 1 organized file)
+// all vuln defintions
 
 import { FindingBase } from './base.js';
 

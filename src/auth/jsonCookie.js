@@ -1,5 +1,4 @@
-// json cookie - load and save cookies from a json file
-// also supports grabing cookies from firefox/chrome profiles
+// json cookie file loader
 
 import fs from 'fs';
 import path from 'path';

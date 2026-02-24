@@ -1,4 +1,4 @@
-// configration classes for the crawlr and authentication
+// crawlr and auth config classes
 
 const DEFAULT_UA = 'Mozilla/5.0 (Windows NT 6.1; rv:45.0) Gecko/20100101 Firefox/45.0';
 

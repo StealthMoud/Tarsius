@@ -1,6 +1,4 @@
-// sql persister - keeps crawlr state in an sqlite databse
-// so we can pause and resume scns later
-// uses better-sqlite3 for syncrohnus access (faster than async for our use case)
+// sqlite storage for scan state
 
 import Database from 'better-sqlite3';
 import path from 'path';

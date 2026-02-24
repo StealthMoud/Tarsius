@@ -1,5 +1,4 @@
-// upload module - detects unresticted file upload vulnerabilitys
-// checks if file upload forms accept dangerus file types
+// file upload detecton
 
 import { Attack } from './attack.js';
 

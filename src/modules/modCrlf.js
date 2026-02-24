@@ -1,4 +1,4 @@
-// crlf module - detects carriage return line feed injecton in headers
+// crlf header injecton checks
 
 import { Attack, Mutator } from './attack.js';
 

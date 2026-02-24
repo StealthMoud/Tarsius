@@ -1,5 +1,4 @@
-// txt payload parser - reads atack payloads from plain text files
-// one payload per line, ignores comments and empty lines
+// reads payloads from .txt files
 
 import fs from 'fs';
 import path from 'path';

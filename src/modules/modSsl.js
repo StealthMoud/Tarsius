@@ -1,5 +1,4 @@
-// ssl module - evaluates ssl/tls certificte securty
-// checks for weak ciphers, expird certs, and other tls issues
+// ssl cert checks
 
 import https from 'https';
 import tls from 'tls';

@@ -1,5 +1,4 @@
-// base report genertor - all report formts extend this
-// provides common interfce for generting reports from scan results
+// base report genertor class
 
 import fs from 'fs';
 import path from 'path';

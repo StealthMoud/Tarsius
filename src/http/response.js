@@ -1,5 +1,4 @@
-// response class - wraps the raw http respons from axios
-// gives us nice properies for status, headers, body, redirectons etc
+// http respons wrapper
 
 import { createHash } from 'crypto';
 import { makeAbsolute } from './request.js';

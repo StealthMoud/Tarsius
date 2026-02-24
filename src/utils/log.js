@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 
-// loging stuff for tarsius
-// colored output to make things prettyer in the terminal
+// colored loging helpers
 
 const LOG_LEVELS = {
     QUIET: 0,

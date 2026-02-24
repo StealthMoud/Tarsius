@@ -1,6 +1,4 @@
-// base atack class - all atack modules inherit from this
-// provides the comn interface for crawling through paramters
-// and sending payloads to find vulnerabilitys
+// base class for atack modules
 
 import path from 'path';
 import { logGreen, logRed, logVerbose, logYellow } from '../utils/log.js';

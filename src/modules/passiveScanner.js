@@ -1,5 +1,4 @@
-// passive scanner - checks for securty issues without sending atack payloads
-// looks at headers, cookies, and page content for problems
+// checks headers and cookies for issues
 
 import { logYellow, logVerbose } from '../utils/log.js';
 import { Attack } from './attack.js';

@@ -1,5 +1,4 @@
-// xss module - finds reflected cross site scriptng vulnerabilitys
-// sends xss payloads in paramters and checks if they reflect back
+// reflected xss detecton
 
 import { Attack, Mutator } from './attack.js';
 

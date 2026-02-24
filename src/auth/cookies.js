@@ -1,5 +1,4 @@
-// cookie handling - convert diffrent cookie formats to our internal formt
-// supports headles browser cookies and mitm proxy cookies
+// cookie format converters
 
 // turn playwright/headless browser cookies into a simple objct
 // the headless crawlr gives us cookies like:
