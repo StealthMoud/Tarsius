@@ -7,7 +7,7 @@ export default class ModExec extends Attack {
         super(crawler, persister, options, crawlerConfig);
         this.moduleName = 'exec';
 
-        // load payloads once, not per url
+        // load payloads once
         const payloadSections = this.loadIniPayloads('execPayloads.ini');
         this._payloads = Object.values(payloadSections).flat();
     }
@@ -15,39 +15,23 @@ export default class ModExec extends Attack {
     async attack(request) {
         const mutator = new Mutator(this._payloads, this.options.skippedParams || []);
 
-        for (const mutation of mutator.mutate(request)) {
-            if (this._isTimeUp()) break;
-
-            try {
-                const response = await this.crawler.send(mutation.request);
-                if (!response || !response.content) continue;
-
-                // check for comand execution indicators
-                // these strings would only apear if the comand ran
-                if (this._hasExecutionMarker(response.content, mutation.payload)) {
-                    this.logVulnerability(
-                        'Command Execution',
-                        mutation.request,
-                        `Command injection found via parameter ${mutation.parameter}`,
-                        mutation.parameter,
-                        'WSTG-INPV-12'
-                    );
-                    break;
-                }
-            } catch {
-                // skip errors
+        await this.sendMutations(request, mutator, (response, mutation) => {
+            if (response.content && this._hasExecutionMarker(response.content)) {
+                return {
+                    category: 'Command Execution',
+                    message: `Command injection found via parameter ${mutation.parameter}`,
+                    wstg: 'WSTG-INPV-12',
+                };
             }
-        }
+            return null;
+        });
     }
 
-    // check if the respnse shows signs of comand execution
-    _hasExecutionMarker(content, payload) {
-        // look for unix/linux markers
-        if (content.includes('root:x:0:0:')) return true;    // /etc/passwd
-        if (content.includes('uid=') && content.includes('gid=')) return true;  // id command
-        if (content.includes('Windows IP Configuration')) return true;  // ipconfig
-        if (content.includes('Volume Serial Number')) return true;  // dir command
-
+    _hasExecutionMarker(content) {
+        if (content.includes('root:x:0:0:')) return true;
+        if (content.includes('uid=') && content.includes('gid=')) return true;
+        if (content.includes('Windows IP Configuration')) return true;
+        if (content.includes('Volume Serial Number')) return true;
         return false;
     }
 }

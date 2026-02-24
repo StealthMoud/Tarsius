@@ -188,51 +188,61 @@ export class Tarsius {
 
         // start with the base url
         const urlsToVisit = [this.crawlerConfig.baseRequest.url];
-
-        // add any extra starting urls
         urlsToVisit.push(...this._startUrls);
 
         const visited = new Set();
         const crawlStart = Date.now();
+        let pathIdCounter = 0;
 
-        // simple bfs crawlr
+        // concurent bfs crawlr
         while (urlsToVisit.length > 0) {
-            const url = urlsToVisit.shift();
+            // grab a batch of unvisited urls
+            const batch = [];
+            while (batch.length < this.concurrentTasks && urlsToVisit.length > 0) {
+                const url = urlsToVisit.shift();
+                if (visited.has(url)) continue;
+                if (!this.scope.check(url)) continue;
+                if (this._excludedUrls.some(ex => url.includes(ex))) continue;
+                if (visited.size >= this.maxDepth * this.maxLinksPerPage) break;
+                visited.add(url);
+                batch.push(url);
+            }
 
-            // skip if alredy visited or out of scope
-            if (visited.has(url)) continue;
-            if (!this.scope.check(url)) continue;
-            if (this._excludedUrls.some(ex => url.includes(ex))) continue;
-            if (visited.size >= this.maxDepth * this.maxLinksPerPage) break;
+            if (batch.length === 0) break;
 
-            visited.add(url);
+            // show progress
+            process.stdout.write(`\r[*] Crawled: ${this._crawledUrls.length} | Queued: ${urlsToVisit.length + batch.length} | Batch: ${batch.length}`.padEnd(120));
 
-            // show what were crawling
-            const shortUrl = url.length > 80 ? url.substring(0, 77) + '...' : url;
-            process.stdout.write(`\r[*] Crawled: ${this._crawledUrls.length} | Queued: ${urlsToVisit.length} | ${shortUrl}`.padEnd(120));
+            // fetch all urls in this batch concurently
+            const results = await Promise.allSettled(
+                batch.map(async (url) => {
+                    try {
+                        const request = new Request(url);
+                        const response = await fetchWithRedirects(request, this.crawlerConfig);
+                        if (!response) return null;
+                        return { request, response };
+                    } catch (err) {
+                        logVerbose(`error crawling ${url}: ${err.message}`);
+                        return null;
+                    }
+                })
+            );
 
-            try {
-                const request = new Request(url);
-                const response = await fetchWithRedirects(request, this.crawlerConfig);
+            // collect results and extract new links
+            for (const result of results) {
+                if (result.status !== 'fulfilled' || !result.value) continue;
+                const { request, response } = result.value;
 
-                if (!response) continue;
-
-                // store the crawled url with an id so atack modules can track it
-                request.pathId = visited.size;
-                this._crawledUrls.push({
-                    request,
-                    response,
-                });
+                request.pathId = ++pathIdCounter;
+                this._crawledUrls.push({ request, response });
 
                 // extract links from the page
-                const links = this._extractLinks(response.content, url);
+                const links = this._extractLinks(response.content, request.url);
                 for (const link of links) {
                     if (!visited.has(link) && this.scope.check(link)) {
                         urlsToVisit.push(link);
                     }
                 }
-            } catch (err) {
-                logVerbose(`error crawling ${url}: ${err.message}`);
             }
 
             // check time limit

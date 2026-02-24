@@ -6,6 +6,9 @@ import { Request } from '../http/request.js';
 import { parseIniPayloads, getPayloadPath } from '../parsers/iniPayloadParser.js';
 import { parseTxtPayloads } from '../parsers/txtPayloadParser.js';
 
+// how many payloads to send at once per url
+const PAYLOAD_CONCURRENCY = 10;
+
 export class Attack {
     // crawler = AsyncCrawler instance
     // persister = SqlPersister instance
@@ -133,6 +136,47 @@ export class Attack {
     loadTxtPayloads(filename) {
         const filePath = getPayloadPath(filename);
         return parseTxtPayloads(filePath);
+    }
+
+    // send all mutatins concurently and check each respons
+    // checkFn = (response, mutation) => vuln info string or null
+    // stops early when a vuln is found for a paramter
+    async sendMutations(request, mutator, checkFn) {
+        const mutations = [...mutator.mutate(request)];
+        if (mutations.length === 0) return;
+
+        const foundParams = new Set();
+        let i = 0;
+
+        while (i < mutations.length && !this._isTimeUp()) {
+            // grab a batch
+            const batch = mutations.slice(i, i + PAYLOAD_CONCURRENCY);
+            i += PAYLOAD_CONCURRENCY;
+
+            const results = await Promise.allSettled(
+                batch.map(async (mutation) => {
+                    if (foundParams.has(mutation.parameter)) return null;
+                    try {
+                        const response = await this.crawler.send(mutation.request);
+                        if (!response) return null;
+                        const vulnInfo = checkFn(response, mutation);
+                        if (vulnInfo) return { mutation, info: vulnInfo };
+                    } catch {
+                        // skip
+                    }
+                    return null;
+                })
+            );
+
+            for (const result of results) {
+                if (result.status !== 'fulfilled' || !result.value) continue;
+                const { mutation, info } = result.value;
+                if (!foundParams.has(mutation.parameter)) {
+                    foundParams.add(mutation.parameter);
+                    this.logVulnerability(info.category, mutation.request, info.message, mutation.parameter, info.wstg || '');
+                }
+            }
+        }
     }
 }
 

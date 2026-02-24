@@ -15,27 +15,15 @@ export default class ModXss extends Attack {
     async attack(request) {
         const mutator = new Mutator(this._payloads, this.options.skippedParams || []);
 
-        for (const mutation of mutator.mutate(request)) {
-            if (this._isTimeUp()) break;
-
-            try {
-                const response = await this.crawler.send(mutation.request);
-                if (!response) continue;
-
-                // check if the payload is reflcted in the response
-                if (response.content && response.content.includes(mutation.payload)) {
-                    this.logVulnerability(
-                        'Reflected Cross Site Scripting',
-                        mutation.request,
-                        `XSS vulnerability found via parameter ${mutation.parameter}`,
-                        mutation.parameter,
-                        'WSTG-INPV-01'
-                    );
-                    break; // one vuln per paramter is enought
-                }
-            } catch {
-                // skip errors on individual payloads
+        await this.sendMutations(request, mutator, (response, mutation) => {
+            if (response.content && response.content.includes(mutation.payload)) {
+                return {
+                    category: 'Reflected Cross Site Scripting',
+                    message: `XSS vulnerability found via parameter ${mutation.parameter}`,
+                    wstg: 'WSTG-INPV-01',
+                };
             }
-        }
+            return null;
+        });
     }
 }

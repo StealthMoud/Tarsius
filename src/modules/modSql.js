@@ -31,7 +31,6 @@ export default class ModSql extends Attack {
     }
 
     async attack(request) {
-        // simple error-based payloads
         const payloads = [
             "'",
             "\"",
@@ -45,37 +44,18 @@ export default class ModSql extends Attack {
 
         const mutator = new Mutator(payloads, this.options.skippedParams || []);
 
-        // first get the normal respnse to compare against
-        let normalResponse;
-        try {
-            normalResponse = await this.crawler.send(request);
-        } catch {
-            return;
-        }
-
-        for (const mutation of mutator.mutate(request)) {
-            if (this._isTimeUp()) break;
-
-            try {
-                const response = await this.crawler.send(mutation.request);
-                if (!response || !response.content) continue;
-
-                // check for sql error paterns in the response
-                for (const pattern of SQL_ERROR_PATTERNS) {
-                    if (pattern.test(response.content)) {
-                        this.logVulnerability(
-                            'SQL Injection',
-                            mutation.request,
-                            `SQL injection found via parameter ${mutation.parameter}`,
-                            mutation.parameter,
-                            'WSTG-INPV-05'
-                        );
-                        return; // found one, stop testng this url
-                    }
+        await this.sendMutations(request, mutator, (response, mutation) => {
+            if (!response.content) return null;
+            for (const pattern of SQL_ERROR_PATTERNS) {
+                if (pattern.test(response.content)) {
+                    return {
+                        category: 'SQL Injection',
+                        message: `SQL injection found via parameter ${mutation.parameter}`,
+                        wstg: 'WSTG-INPV-05',
+                    };
                 }
-            } catch {
-                // skip errors
             }
-        }
+            return null;
+        });
     }
 }

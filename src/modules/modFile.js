@@ -15,43 +15,24 @@ export default class ModFile extends Attack {
     async attack(request) {
         const mutator = new Mutator(this._payloads, this.options.skippedParams || []);
 
-        for (const mutation of mutator.mutate(request)) {
-            if (this._isTimeUp()) break;
-
-            try {
-                const response = await this.crawler.send(mutation.request);
-                if (!response || !response.content) continue;
-
-                // check for file incluison indicators
-                if (this._hasFileMarker(response.content)) {
-                    this.logVulnerability(
-                        'File Inclusion',
-                        mutation.request,
-                        `Path traversal found via parameter ${mutation.parameter}`,
-                        mutation.parameter,
-                        'WSTG-INPV-11'
-                    );
-                    break;
-                }
-            } catch {
-                // skip errors
+        await this.sendMutations(request, mutator, (response, mutation) => {
+            if (response.content && this._hasFileMarker(response.content)) {
+                return {
+                    category: 'File Inclusion',
+                    message: `Path traversal found via parameter ${mutation.parameter}`,
+                    wstg: 'WSTG-INPV-11',
+                };
             }
-        }
+            return null;
+        });
     }
 
-    // check if the respnse contains file content markers
     _hasFileMarker(content) {
-        // unix file markers
-        if (content.includes('root:x:0:0:')) return true;       // /etc/passwd
-        if (content.includes('[boot loader]')) return true;      // boot.ini
-        if (content.includes('[extensions]')) return true;       // win.ini
-
-        // php source code leaking
+        if (content.includes('root:x:0:0:')) return true;
+        if (content.includes('[boot loader]')) return true;
+        if (content.includes('[extensions]')) return true;
         if (content.includes('<?php')) return true;
-
-        // web config files
         if (content.includes('<configuration>') && content.includes('connectionString')) return true;
-
         return false;
     }
 }
