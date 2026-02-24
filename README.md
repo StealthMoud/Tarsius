@@ -97,16 +97,16 @@ node bin/tarsius -u http://target.com -C "PHPSESSID=abc123"
 
 | Module | Description | Default |
 |--------|-------------|---------|
-| `xss` | Reflected cross-site scripting | ✅ |
-| `permanentxss` | Stored cross-site scripting | ✅ |
-| `sql` | SQL injection (error-based) | ✅ |
+| `xss` | Reflected cross-site scripting | yes |
+| `permanentxss` | Stored cross-site scripting | yes |
+| `sql` | SQL injection (error-based) | yes |
 | `timesql` | Blind time-based SQL injection | |
-| `exec` | OS command injection | ✅ |
-| `file` | Path traversal / file inclusion | ✅ |
-| `ssrf` | Server-side request forgery | ✅ |
-| `redirect` | Open redirect | ✅ |
-| `upload` | Unrestricted file upload | ✅ |
-| `ssl` | SSL/TLS certificate issues | ✅ |
+| `exec` | OS command injection | yes |
+| `file` | Path traversal / file inclusion | yes |
+| `ssrf` | Server-side request forgery | yes |
+| `redirect` | Open redirect | yes |
+| `upload` | Unrestricted file upload | yes |
+| `ssl` | SSL/TLS certificate issues | yes |
 | `csrf` | Cross-site request forgery | |
 | `crlf` | CRLF header injection | |
 | `xxe` | XML external entity injection | |
