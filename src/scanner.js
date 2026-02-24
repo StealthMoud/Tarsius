@@ -7,7 +7,7 @@ import * as cheerio from 'cheerio';
 import { logGreen, logRed, logYellow, logVerbose, logBlue } from './utils/log.js';
 import { TARSIUS_VERSION } from './index.js';
 import { sendRequest, fetchWithRedirects } from './http/client.js';
-import { Request } from './http/request.js';
+import { Request, httpRepr } from './http/request.js';
 import { AsyncCrawler } from './crawler/crawler.js';
 import { ActiveScanner } from './modules/activeScanner.js';
 import { PassiveScanner } from './modules/passiveScanner.js';
@@ -147,7 +147,18 @@ export class Tarsius {
     }
 
     // save a found vulnerabilty or anomly to our results
-    saveVulnerability(pathId, moduleName, category, level, parameter, info, type = 'vulnerability', wstg = '') {
+    saveVulnerability(pathId, moduleName, category, level, parameter, info, type = 'vulnerability', wstg = '', request = null) {
+        let curlCommand = '';
+        let url = '';
+        if (request) {
+            url = request.url;
+            try {
+                curlCommand = httpRepr(request);
+            } catch {
+                curlCommand = '';
+            }
+        }
+
         const item = {
             pathId,
             moduleName,
@@ -156,6 +167,8 @@ export class Tarsius {
             parameter,
             info,
             wstg,
+            url,
+            curl: curlCommand,
             timestamp: new Date().toISOString(),
         };
 

@@ -96,7 +96,8 @@ export class Attack {
                 parameter,
                 info,
                 'vulnerability',
-                wstg
+                wstg,
+                request
             );
         }
     }
@@ -114,7 +115,8 @@ export class Attack {
                 parameter,
                 info,
                 'anomaly',
-                wstg
+                wstg,
+                request
             );
         }
     }

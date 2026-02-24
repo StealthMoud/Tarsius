@@ -74,16 +74,18 @@ export class HtmlReportGenerator extends ReportGenerator {
                     <p class="description">${this._escape(desc)}</p>
                     <p class="solution"><strong>Solution:</strong> ${this._escape(solution)}</p>
                     <table>
-                        <tr><th>URL</th><th>Parameter</th><th>Info</th></tr>
+                        <tr><th>URL</th><th>Parameter</th><th>Info</th><th>Verify (CURL)</th></tr>
                         ${items.map(item => {
                 const escapedUrl = this._escape(item.url || '');
                 const escapedParam = this._escape(item.parameter || '');
                 const escapedInfo = this._escape(item.info || '');
+                const escapedCurl = this._escape(item.curl || '');
                 return `
                             <tr>
                                 <td><a href="${escapedUrl}" target="_blank">${escapedUrl}</a></td>
                                 <td><strong>${escapedParam}</strong></td>
                                 <td>${escapedInfo}</td>
+                                <td>${escapedCurl ? `<code>${escapedCurl}</code>` : 'N/A'}</td>
                             </tr>
                             `;
             }).join('')}
@@ -98,14 +100,16 @@ export class HtmlReportGenerator extends ReportGenerator {
                 <div class="anomaly-section">
                     <h3>${this._escape(category)} (${items.length})</h3>
                     <table>
-                        <tr><th>URL</th><th>Info</th></tr>
+                        <tr><th>URL</th><th>Info</th><th>Verify (CURL)</th></tr>
                         ${items.map(item => {
                 const escapedUrl = this._escape(item.url || '');
                 const escapedInfo = this._escape(item.info || '');
+                const escapedCurl = this._escape(item.curl || '');
                 return `
                             <tr>
                                 <td><a href="${escapedUrl}" target="_blank">${escapedUrl}</a></td>
                                 <td>${escapedInfo}</td>
+                                <td>${escapedCurl ? `<code>${escapedCurl}</code>` : 'N/A'}</td>
                             </tr>
                             `;
             }).join('')}
