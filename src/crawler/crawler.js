@@ -1,9 +1,11 @@
 // low level page fetchr with retrys
 
+import http from 'http';
 import https from 'https';
 import axios from 'axios';
 import { Response } from '../http/response.js';
 import { logVerbose, logRed } from '../utils/log.js';
+import { globalHttpAgent, globalHttpsAgent, insecureHttpsAgent } from '../http/client.js';
 
 // status codes for crawl results
 export const CrawlStatus = {
@@ -16,8 +18,7 @@ export const CrawlStatus = {
     UNKNOWN_ERROR: 6,
 };
 
-// reusable agent for skiping ssl checks
-const insecureAgent = new https.Agent({ rejectUnauthorized: false });
+
 
 export class AsyncCrawler {
     // config = CrawlerConfiguration object
@@ -72,10 +73,9 @@ export class AsyncCrawler {
             };
         }
 
-        // ssl
-        if (!this._config.secure) {
-            axiosConfig.httpsAgent = insecureAgent;
-        }
+        // use global agents for keep-alive and dns caching
+        axiosConfig.httpAgent = globalHttpAgent;
+        axiosConfig.httpsAgent = this._config.secure ? globalHttpsAgent : insecureHttpsAgent;
 
         this._client = axios.create(axiosConfig);
     }
