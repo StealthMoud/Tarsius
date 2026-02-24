@@ -1,6 +1,6 @@
 # Tarsius - Recommended Test Targets
 
-This document provides a collection of public websites that are intentionally designed with security vulnerabilities. These are safe and legal targets for testing the scanning and detection capabilities of Tarsius.
+This document provides a collection of public websites that are intentionally designed with security vulnerabilities. These are safe and legal targets for testing the scanning capabilities of Tarsius.
 
 ## 1. Acunetix Vulnerable Apps
 Maintained by Acunetix (now Invicti), these are classic targets for testing web scanners.
@@ -11,7 +11,7 @@ Maintained by Acunetix (now Invicti), these are classic targets for testing web 
 
 **Recommended Command:**
 ```bash
-python3 bin/tarsius -u http://testphp.vulnweb.com -m common -o reports/testphp_report.html
+tarsius -u http://testphp.vulnweb.com -o reports/testphp.html
 ```
 
 ---
@@ -23,7 +23,7 @@ A simulated online banking site created by IBM to demonstrate web application vu
 
 **Recommended Command:**
 ```bash
-python3 bin/tarsius -u http://demo.testfire.net -m sql,xss,http_headers -o reports/testfire_report.html
+tarsius -u http://demo.testfire.net -m sql,xss -o reports/testfire.html
 ```
 
 ---
@@ -33,11 +33,9 @@ Probably the most modern and sophisticated "vulnerable by design" web applicatio
 
 - **URL (Public Demo)**: [https://demo.owasp-juice.shop](https://demo.owasp-juice.shop)
 
-**Note:** Since this is a modern SPA (Single Page Application), using the `--headless` flag is recommended to ensure all links are discovered.
-
 **Recommended Command:**
 ```bash
-python3 bin/tarsius -u https://demo.owasp-juice.shop --headless visible -m common -o reports/juiceshop_report.html
+tarsius -u https://demo.owasp-juice.shop -o reports/juiceshop.html
 ```
 
 ---
@@ -49,7 +47,7 @@ A target developed by Troy Hunt (creator of Have I Been Pwned) showing common re
 
 **Recommended Command:**
 ```bash
-python3 bin/tarsius -u https://hack-yourself-first.com -m xss,sql -o reports/hackyourself_report.html
+tarsius -u https://hack-yourself-first.com -m xss,sql -o reports/hackyourself.html
 ```
 
 ---
@@ -59,13 +57,13 @@ An educational tool from Google created to teach web application security.
 
 - **URL**: [https://google-gruyere.appspot.com](https://google-gruyere.appspot.com)
 
-**Note:** This site is slightly different as it often requires you to start a personal "instance" (a unique ID in the URL).
+**Note:** This site requires you to start a personal "instance" (a unique ID in the URL).
 
 ---
 
-## Summary of Usage Tips for Testing
+## Tips for Testing
 
-1. **Output Directory**: Use the `-o` flag to specify a report name. Tarsius will create a folder with that name containing the HTML report.
-2. **Verbosity**: For detailed live feedback during the scan, add `-v 1`.
-3. **Headless Mode**: For modern websites (React, Angular, Vue), use `--headless visible` to allow the scanner to "see" the page as a real user would.
-4. **Module Selection**: Use `-m common` for a balanced scan or `-m all` for a deep, comprehensive audit.
+1. **Output**: Use `-o` to specify where the report goes.
+2. **Verbosity**: Add `-v 1` for live feedback during the scan.
+3. **Module Selection**: Use `-m xss,sql` to pick specific modules or omit for defaults.
+4. **Timeout**: Increase with `-t 15` if the target is slow.
