@@ -15,6 +15,3 @@ def print_banner():
     print(banner)
     log_yellow(f"Tarsius {TARSIUS_VERSION} - Black Box Web Scanner")
 
-
-def print_easter_eggs():
-    pass

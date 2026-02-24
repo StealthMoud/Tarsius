@@ -16,7 +16,7 @@ from tarsius.attacks.active_scanner import module_to_class_name
 from tarsius.attacks.modules.core import all_modules, common_modules, resolve_module_settings
 from tarsius.core.controller.exceptions import InvalidOptionValue
 from tarsius.core.controller.tarsius import Tarsius
-from tarsius.utils.banners import print_banner, print_easter_eggs
+from tarsius.utils.banners import print_banner
 from tarsius.network.web import is_valid_url
 from tarsius.parsers.commandline import parse_args
 from tarsius.utils.log import logging, log_blue
@@ -200,7 +200,6 @@ def build_attack_options_from_args(args: Namespace) -> dict:
     return attack_options
 
 
-# pylint: disable=too-many-locals,too-many-branches,too-many-statements
 async def tarsius_main():
     print_banner()
     args = parse_args()
