@@ -140,6 +140,19 @@ export class Request {
         return typeof this._postParams === 'string';
     }
 
+    // get numeric parts of the path that could be RESTful IDs (e.g. /products/123)
+    // returns [[index_in_path_split, current_value], ...]
+    get pathParams() {
+        const parts = this._basePath.split('/');
+        const params = [];
+        for (let i = 0; i < parts.length; i++) {
+            if (/^\d+$/.test(parts[i])) {
+                params.push([i, parts[i]]);
+            }
+        }
+        return params;
+    }
+
     get encodedParams() {
         return Request.encodeParams(this._getParams);
     }

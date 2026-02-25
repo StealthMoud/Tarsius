@@ -160,5 +160,62 @@ export default class ModSql extends Attack {
         for (const [paramName, paramValue] of postParams) {
             await testParameter(paramName, paramValue, true);
         }
+
+        // 3. Test path parameters (RESTful IDs like /products/1)
+        const pathParams = request.pathParams;
+        for (const [idx, value] of pathParams) {
+            const paramName = `PATH_${idx}`;
+
+            // local sendMutated wrapper for path segments
+            const sendPathMutated = async (payload) => {
+                const parts = request._basePath.split('/');
+                parts[idx] = value + payload;
+                const mutatedPath = parts.join('/');
+
+                // ensure absolute URL reconstruction
+                let targetUrl = mutatedPath;
+                if (request.scheme && request.netloc) {
+                    targetUrl = `${request.scheme}://${request.netloc}${mutatedPath}`;
+                }
+
+                const mutatedReq = new Request(targetUrl, {
+                    method: request.method,
+                    getParams: request.getParams,
+                    postParams: request.postParams,
+                    referer: request.referer,
+                    linkDepth: request.linkDepth,
+                    enctype: request.enctype
+                });
+                mutatedReq.pathId = request.pathId;
+
+                const startTime = Date.now();
+                try {
+                    logVerbose(`[*] [sql] fuzzing path segment ${idx} with payload: ${value + payload}`);
+                    const res = await this.crawler.send(mutatedReq);
+                    return { content: res.content, time: (Date.now() - startTime) };
+                } catch (error) {
+                    return { error: error.code, time: (Date.now() - startTime) };
+                }
+            };
+
+            // reusing the logic but with the path-specific sender
+            // (ideally we would refactor testParameter to take a sender function)
+            // but for now, we'll implement a narrow targeted check for path SQLi
+            for (const prefix of prefixes) {
+                const timePayload = `${prefix} and sleep(10)#`;
+                const resTime = await sendPathMutated(timePayload);
+                if ((resTime.error === 'ECONNABORTED' && resTime.time > 4500) || (resTime.time >= 9000)) {
+                    this.logVulnerability('SQL Injection', request, `Time-Based Blind SQLi found via path segment ${idx}`, paramName, 'WSTG-INPV-05');
+                    break;
+                }
+
+                const errorPayload = `${prefix}'`;
+                const resError = await sendPathMutated(errorPayload);
+                if (resError && resError.content && /sql.*syntax|you have an error in your sql syntax|unclosed quotation mark/i.test(resError.content)) {
+                    this.logVulnerability('SQL Injection', request, `Error-Based SQLi found via path segment ${idx}`, paramName, 'WSTG-INPV-05');
+                    break;
+                }
+            }
+        }
     }
 }

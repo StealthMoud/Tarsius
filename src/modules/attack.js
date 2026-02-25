@@ -265,5 +265,39 @@ export class Mutator {
                 }
             }
         }
+
+        // mutate URL path parameters (RESTful IDs like /products/1)
+        const pathParams = request.pathParams;
+        for (const [idx, value] of pathParams) {
+            const paramName = `PATH_${idx}`;
+            if (this.skipParams.has(paramName)) continue;
+
+            for (const payload of this.payloads) {
+                const parts = request._basePath.split('/');
+                parts[idx] = payload;
+                const mutatedPath = parts.join('/');
+
+                // ensure we use the absolute URL if the original was absolute
+                let targetUrl = mutatedPath;
+                if (request.scheme && request.netloc) {
+                    targetUrl = `${request.scheme}://${request.netloc}${mutatedPath}`;
+                }
+
+                const mutatedRequest = new Request(targetUrl, {
+                    method: request.method,
+                    getParams: request.getParams,
+                    postParams: request.postParams,
+                    referer: request.referer,
+                    linkDepth: request.linkDepth,
+                });
+                mutatedRequest.pathId = request.pathId;
+
+                yield {
+                    request: mutatedRequest,
+                    parameter: paramName,
+                    payload,
+                };
+            }
+        }
     }
 }
