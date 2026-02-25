@@ -26,29 +26,16 @@
     </div>
 
     <div class="card vuln-marker">
-        <span class="vuln-badge">Vulnerable to Stored XSS</span>
-        <h3>reviews</h3>
-        <% if (comments && comments.length> 0) { %>
-            <% comments.forEach(function(comment) { %>
-                <div style="border-bottom: 1px solid #ddd; margin-bottom: 1rem; padding-bottom: 0.5rem;">
-                    <strong>
-                        <%= comment.username %>
-                    </strong> says:
-                    <!-- intentionally rendering unescaped html for stored xss demo -->
-                    <p><%- comment.comment %></p>
-                </div>
-                <% }); %>
-                    <% } else { %>
-                        <p>no reviews yet. be the first!</p>
-                        <% } %>
-    </div>
-
-    <div class="card">
-        <h3>add a review</h3>
-        <form action="/products/<%= product.id %>/comments" method="post">
-            <textarea name="comment" rows="4" style="width: 100%; border:1px solid #ccc;"></textarea><br />
-            <button type="submit">post review</button>
-        </form>
+        <span class="vuln-badge">Vulnerable to Reflected XSS</span>
+        <h3>Product Category Preview</h3>
+        <p>Previewing category for current product:</p>
+        <!-- Intentionally rendering unescaped HTML from query parameter for Reflected XSS -->
+        <div style="background: #f9f9f9; padding: 10px; border: 1px solid #ddd;">
+            <%- preview %>
+        </div>
+        <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+            Usage: <code>/products/<%= product.id %>?preview=[your-text]</code>
+        </p>
     </div>
 
     <%- include('../layout/footer') %>

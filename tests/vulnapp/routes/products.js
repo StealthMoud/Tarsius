@@ -19,9 +19,10 @@ router.get('/', async (req, res) => {
     }
 });
 
-// product detail endpoint with blind sqli and stored comments (stored xss)
+// product detail endpoint with blind sqli and reflected xss
 router.get('/:id', async (req, res) => {
     const id = req.params.id;
+    const preview = req.query.preview || '';
 
     // using simple interpolation to trigger time-based blind sqli if sleep() is injected
     const query = "SELECT * FROM products WHERE id = " + id;
@@ -30,31 +31,10 @@ router.get('/:id', async (req, res) => {
         const products = await db.executeVulnerableQueryWithRetry(query);
         if (products.length === 0) return res.status(404).send('Product not found');
 
-        // fetch comments for stored xss demonstration
-        const commentsQuery = `SELECT c.*, u.username FROM comments c JOIN users u ON c.user_id = u.id WHERE c.product_id = ? ORDER BY c.created_at DESC`;
-        const comments = await db.executeQueryWithRetry(commentsQuery, [id]);
-
-        res.render('products/detail', { product: products[0], comments });
+        res.render('products/detail', { product: products[0], preview });
     } catch (e) {
         // generic error catching for blind sqli
         res.status(500).send('An unexpected error occurred processing your request.');
-    }
-});
-
-// stored xss endpoint (adding comments)
-router.post('/:id/comments', async (req, res) => {
-    const id = req.params.id;
-    const { comment } = req.body;
-    const userId = req.session.user ? req.session.user.id : 2; // default to 'john' if not logged in
-
-    if (!comment) return res.redirect(`/products/${id}`);
-
-    try {
-        // intentionally missing html sanitization to allow stored xss
-        await db.executeQueryWithRetry("INSERT INTO comments (product_id, user_id, comment) VALUES (?, ?, ?)", [id, userId, comment]);
-        res.redirect(`/products/${id}`);
-    } catch (e) {
-        res.status(500).send(`Failed to add comment. Error: ${e.message}`);
     }
 });
 
