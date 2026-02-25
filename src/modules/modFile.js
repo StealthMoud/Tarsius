@@ -28,7 +28,8 @@ export default class ModFile extends Attack {
     }
 
     _hasFileMarker(content) {
-        if (content.includes('root:x:0:0:')) return true;
+        if (content.includes('root:x:0:0:')) return true;  // linux passwd
+        if (content.includes('root:*:0:0:')) return true;  // macos / bsd passwd
         if (content.includes('[boot loader]')) return true;
         if (content.includes('[extensions]')) return true;
         if (content.includes('<?php')) return true;

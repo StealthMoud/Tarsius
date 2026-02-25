@@ -32,6 +32,13 @@ export default class ModExec extends Attack {
         if (content.includes('uid=') && content.includes('gid=')) return true;
         if (content.includes('Windows IP Configuration')) return true;
         if (content.includes('Volume Serial Number')) return true;
+        
+        // ping command detection
+        const lowerContent = content.toLowerCase();
+        if (lowerContent.includes('bytes from') && lowerContent.includes('icmp_seq=')) return true; // linux/mac
+        if (lowerContent.includes('reply from') && lowerContent.includes('bytes=')) return true;    // windows
+        if (lowerContent.includes('ping statistics for')) return true;
+        
         return false;
     }
 }

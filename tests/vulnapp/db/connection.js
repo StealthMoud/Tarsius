@@ -33,6 +33,11 @@ async function executeVulnerableQueryWithRetry(query, retries = 5, delayMs = 300
             const [rows, fields] = await pool.query(query);
             return rows;
         } catch (error) {
+            // immediately throw on syntax errors or bad fields to avoid 15s timeout loops during SQLi fuzzing
+            if (error.code === 'ER_PARSE_ERROR' || error.code === 'ER_BAD_FIELD_ERROR' || error.code === 'ER_NO_SUCH_TABLE') {
+                throw error;
+            }
+
             console.error(`Vulnerable database query failed (${error.code}). Query: [${query.substring(0, 100)}]. Retrying in ${delayMs / 1000}s...`);
             if (i === retries - 1) throw error;
             await new Promise(resolve => setTimeout(resolve, delayMs));
