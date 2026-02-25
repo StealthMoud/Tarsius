@@ -97,7 +97,7 @@ export class HtmlReportGenerator extends ReportGenerator {
                         <h3>${this._escape(category)}</h3>
                     </div>
                     <div class="issue-meta">
-                        <p class="desc">${this._escape(desc)}</p>
+                        <p class="desc">${desc}</p>
                         <div class="sol"><strong>Solution:</strong> ${this._escape(solution)}</div>
                     </div>
                     <table>
