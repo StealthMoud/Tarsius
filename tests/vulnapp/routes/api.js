@@ -67,17 +67,4 @@ router.get('/file', (req, res) => {
     }
 });
 
-// xxe (xml external entity) mock
-router.post('/xxe', (req, res) => {
-    let xmlData = '';
-    req.on('data', chunk => xmlData += chunk.toString());
-    req.on('end', () => {
-        // if the payload contains typical xxe markers, simulate a successful exploitation
-        if (xmlData.includes('ENTITY') && xmlData.includes('SYSTEM')) {
-            return res.send("parsed xml output: root:x:0:0:root:/root:/bin/bash");
-        }
-        res.send("parsed xml output: " + xmlData);
-    });
-});
-
 module.exports = router;

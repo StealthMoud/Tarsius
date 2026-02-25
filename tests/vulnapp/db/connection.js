@@ -33,7 +33,7 @@ async function executeVulnerableQueryWithRetry(query, retries = 5, delayMs = 300
             const [rows, fields] = await pool.query(query);
             return rows;
         } catch (error) {
-            console.error(`Vulnerable database query failed (${error.code}). Retrying in ${delayMs / 1000}s...`);
+            console.error(`Vulnerable database query failed (${error.code}). Query: [${query.substring(0, 100)}]. Retrying in ${delayMs / 1000}s...`);
             if (i === retries - 1) throw error;
             await new Promise(resolve => setTimeout(resolve, delayMs));
         }

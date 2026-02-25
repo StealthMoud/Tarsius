@@ -512,27 +512,6 @@ export class Log4Shell extends FindingBase {
     }
 }
 
-export class XxeFinding extends FindingBase {
-    static name() { return 'XML External Entity'; }
-    static shortName() { return 'XXE'; }
-    static type() { return 'vulnerability'; }
-    static wstgCode() { return ['WSTG-INPV-07']; }
-    static description() {
-        return 'XXE allows an atacker to interfere with XML procesing, potentialy reading local files or making server requests.<br><br>' +
-            '<b>Exploitation Verification:</b><br>' +
-            '1. Inject external entity for LFI:<br><code>&lt;!DOCTYPE test [ &lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt; ]&gt;<br>&lt;root&gt;&amp;xxe;&lt;/root&gt;</code><br>' +
-            '2. Inject external entity for SSRF: <code>&lt;!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/"&gt;</code>';
-    }
-    static solution() {
-        return 'Disable external entiy procesing in the XML parser.';
-    }
-    static references() {
-        return [
-            { title: 'OWASP: XXE', url: 'https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing' },
-        ];
-    }
-}
-
 // --- fingerprinting and info ---
 
 export class FingerprintWebApp extends FindingBase {
@@ -760,7 +739,6 @@ export const DEFINITIONS = {
     'Shellshock': Shellshock,
     'Spring4Shell': Spring4Shell,
     'Log4Shell': Log4Shell,
-    'XML External Entity': XxeFinding,
     'Web Application Fingerprint': FingerprintWebApp,
     'Web Server Fingerprint': FingerprintWebServer,
     'Information Disclosure': InformationDisclosure,

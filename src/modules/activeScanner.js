@@ -14,7 +14,6 @@ const MODULE_MAP = {
     'ssrf': () => import('./modSsrf.js'),
     'crlf': () => import('./modCrlf.js'),
     'csrf': () => import('./modCsrf.js'),
-    'xxe': () => import('./modXxe.js'),
     'ldap': () => import('./modLdap.js'),
     'timesql': () => import('./modTimesql.js'),
     'backup': () => import('./modBackup.js'),
@@ -38,7 +37,7 @@ const MODULE_MAP = {
 // previously hardcoded to 9 modules; now dynamically uses all available implemented modules
 const DEFAULT_MODULES = [
     'exec', 'file', 'sql', 'xss', 'ssrf', 'redirect',
-    'permanentxss', 'upload', 'ssl', 'crlf', 'csrf', 'xxe', 'backup'
+    'permanentxss', 'upload', 'ssl', 'crlf', 'csrf', 'backup'
 ];
 
 export class ActiveScanner {
