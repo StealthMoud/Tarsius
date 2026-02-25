@@ -13,7 +13,8 @@
         </form>
     </div>
 
-    <div class="card">
+    <div class="card vuln-marker">
+        <span class="vuln-badge">Vulnerable to SSRF (Internal Probing)</span>
         <h3>fetch avatar from external site</h3>
         <p>test our new proxy feature!</p>
         <form action="/api/avatar/fetch" method="get">
@@ -23,7 +24,8 @@
         </form>
     </div>
 
-    <div class="card">
+    <div class="card vuln-marker">
+        <span class="vuln-badge">Vulnerable to Unrestricted File Upload</span>
         <h3>update profile picture</h3>
         <form action="/api/upload" method="post" enctype="multipart/form-data">
             <input type="file" name="profile_pic" />
@@ -31,11 +33,16 @@
         </form>
     </div>
 
-    <div class="card">
+    <div class="card vuln-marker">
+        <span class="vuln-badge">Information Disclosure</span>
         <h3>developer resources</h3>
         <ul>
-            <li><a href="/app.js.bak">download backend backup</a></li>
-            <li><a href="/profile/redirect?url=http://example.com">external profile link testing</a></li>
+            <li><a href="/app.js.bak">download backend backup</a> <span class="vuln-label">(Sensitive File
+                    Exposure)</span></li>
+            <li><a href="/profile/redirect?url=http://example.com">external profile link testing</a> <span
+                    class="vuln-label">(Open Redirect / Blind SSRF)</span></li>
+            <li><a href="/lang?set=en">change language preference</a> <span class="vuln-label">(CRLF Injection)</span>
+            </li>
             <li><a href="/api/avatar/fetch?url=http://example.com" style="display:none;">fetch internal avatar</a></li>
         </ul>
     </div>

@@ -9,7 +9,8 @@
             </p>
             <% } %>
 
-                <form action="/auth/login" method="post">
+                <form action="/auth/login" method="post" class="vuln-marker">
+                    <span class="vuln-badge">Vulnerable to SQLi (Auth Bypass)</span>
                     <div>
                         <label>username:</label><br />
                         <input type="text" name="username" style="width: 100%;" />

@@ -1,5 +1,11 @@
 <%- include('../layout/header') %>
 
+    <div class="vuln-marker" style="padding: 10px; margin-bottom: 15px;">
+        <span class="vuln-badge">Vulnerable to Blind SQL Injection</span>
+        <p>The ID parameter in the URL (<code>/products/<%= product.id %></code>) is vulnerable to time-based and
+            boolean-based blind SQLi.</p>
+    </div>
+
     <h2>
         <%= product.name %>
     </h2>
@@ -9,7 +15,8 @@
         <%= product.description %>
     </p>
 
-    <div class="card">
+    <div class="card vuln-marker">
+        <span class="vuln-badge">Vulnerable to OS Command Injection</span>
         <h3>refresh stock status</h3>
         <form action="/products/<%= product.id %>/refresh-stock" method="post">
             <label>stock server ip:</label>
@@ -18,7 +25,8 @@
         </form>
     </div>
 
-    <div class="card">
+    <div class="card vuln-marker">
+        <span class="vuln-badge">Vulnerable to Stored XSS</span>
         <h3>reviews</h3>
         <% if (comments && comments.length> 0) { %>
             <% comments.forEach(function(comment) { %>
@@ -26,7 +34,7 @@
                     <strong>
                         <%= comment.username %>
                     </strong> says:
-                    <!-- intentionally rendering unescaped html for stored xss -->
+                    <!-- intentionally rendering unescaped html for stored xss demo -->
                     <p><%- comment.comment %></p>
                 </div>
                 <% }); %>
