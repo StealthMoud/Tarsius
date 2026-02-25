@@ -424,14 +424,14 @@ export class Tarsius {
 
         // 1. add already crawled ones
         for (const { request } of this._crawledUrls) {
-            allRequests.set(request.hash(), request);
+            allRequests.set(request.logicalHash(), request);
         }
 
         // 2. add discovered forms/links (ensuring pathId is set for tracking)
         let pathIdCounter = this._crawledUrls.length;
         for (const request of this._discoveredRequests) {
             if (!request.pathId) request.pathId = ++pathIdCounter;
-            const h = request.hash();
+            const h = request.logicalHash();
             if (!allRequests.has(h)) {
                 allRequests.set(h, request);
             }

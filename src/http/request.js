@@ -173,6 +173,26 @@ export class Request {
         return createHash('md5').update(data).digest('hex');
     }
 
+    // path with numbers replaced by placeholders to group similar endpoints
+    get normalizedPath() {
+        const parts = this._basePath.split('/');
+        const normalized = parts.map(p => {
+            if (/^\d+$/.test(p)) return '{id}';
+            return p;
+        });
+        return normalized.join('/');
+    }
+
+    // hash for logical deduplication (same method, same path structure, same parameter keys)
+    logicalHash() {
+        // sort parameters by key to ensure order doesnt change the hash
+        const getKeys = (this._getParams || []).map(p => p[0]).sort().join(',');
+        const postKeys = (typeof this._postParams === 'string') ? 'JSON' : (this._postParams || []).map(p => p[0]).sort().join(',');
+
+        const data = `${this._method}|${this.normalizedPath}|${getKeys}|${postKeys}`;
+        return createHash('md5').update(data).digest('hex');
+    }
+
     toString() {
         return `${this._method} ${this.url}`;
     }
