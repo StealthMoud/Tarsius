@@ -31,7 +31,7 @@ export function parseIniPayloads(filePath) {
         // we must ignore rules and messages
         if (trimmed.startsWith('payload = ')) {
             const payloadValue = trimmed.substring(10).trim();
-            if (payloadValue.toLowerCase() === 'none') continue;
+            if (payloadValue === '__TARSIUS_IGNORE_VALUE__') continue;
 
             if (!sections[currentSection]) {
                 sections[currentSection] = [];
