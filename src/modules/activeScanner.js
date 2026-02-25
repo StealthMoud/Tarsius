@@ -35,9 +35,10 @@ const MODULE_MAP = {
 };
 
 // default modul list - used when no specifc modules are requestd
+// previously hardcoded to 9 modules; now dynamically uses all available implemented modules
 const DEFAULT_MODULES = [
     'exec', 'file', 'sql', 'xss', 'ssrf', 'redirect',
-    'permanentxss', 'upload', 'ssl',
+    'permanentxss', 'upload', 'ssl', 'crlf', 'csrf', 'xxe', 'backup'
 ];
 
 export class ActiveScanner {

@@ -176,7 +176,10 @@ export class Explorer {
             // extract input fields
             // this is a rough extraction, the real parser will do much beter
             const postParams = [];
-            const inputRegex = /<input[^>]*name\s*=\s*["']([^"']*)["'][^>]*>/gi;
+            const fileParams = [];
+
+            // updated regex to capture type attributes and name attributes
+            const inputRegex = /<input[^>]+>/gi;
             let inputMatch;
 
             // search for inputs between this form and the next form or end of html
@@ -184,14 +187,29 @@ export class Explorer {
             const formHtml = html.substring(match.index, formEndIdx > 0 ? formEndIdx : undefined);
 
             while ((inputMatch = inputRegex.exec(formHtml)) !== null) {
-                const valueMatch = inputMatch[0].match(/value\s*=\s*["']([^"']*)["']/i);
-                postParams.push([inputMatch[1], valueMatch ? valueMatch[1] : '']);
+                const tagHtml = inputMatch[0];
+                const nameMatch = tagHtml.match(/name\s*=\s*["']([^"']*)["']/i);
+                if (!nameMatch) continue;
+
+                const typeMatch = tagHtml.match(/type\s*=\s*["']([^"']*)["']/i);
+                const valueMatch = tagHtml.match(/value\s*=\s*["']([^"']*)["']/i);
+
+                const name = nameMatch[1];
+                const value = valueMatch ? valueMatch[1] : '';
+                const type = typeMatch ? typeMatch[1].toLowerCase() : 'text';
+
+                if (type === 'file') {
+                    fileParams.push([name, 'mock_upload.txt']);
+                } else {
+                    postParams.push([name, value]);
+                }
             }
 
             forms.push(new Request(action, {
                 method,
                 postParams: method === 'POST' ? postParams : null,
                 getParams: method === 'GET' ? postParams : null,
+                fileParams: fileParams.length > 0 ? fileParams : null,
                 referer: baseUrl,
             }));
         }
