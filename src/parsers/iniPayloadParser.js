@@ -30,11 +30,13 @@ export function parseIniPayloads(filePath) {
         // rules = <matching rule>
         // we must ignore rules and messages
         if (trimmed.startsWith('payload = ')) {
+            const payloadValue = trimmed.substring(10).trim();
+            if (payloadValue.toLowerCase() === 'none') continue;
+
             if (!sections[currentSection]) {
                 sections[currentSection] = [];
             }
-            // extract everything after 'payload = '
-            sections[currentSection].push(trimmed.substring(10));
+            sections[currentSection].push(payloadValue);
         }
     }
 
