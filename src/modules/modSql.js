@@ -23,14 +23,6 @@ export default class ModSql extends Attack {
 
         const baseContent = defaultResponse.content;
 
-        // helper to compare responses with a 5% length tolerace for dynamic content
-        const isSimilar = (resA, resB) => {
-            if (!resA || !resB) return false;
-            const diff = Math.abs(resA.length - resB.length);
-            const ratio = diff / Math.max(resA.length, resB.length, 1);
-            return ratio < 0.05;
-        };
-
         const prefixes = ["", "'", '"'];
         const getParams = request.getParams || [];
         const postParams = typeof request.postParams !== 'string' ? (request.postParams || []) : [];
@@ -79,7 +71,7 @@ export default class ModSql extends Attack {
                 const resUnionFalse = await sendMutated(unionFalse);
 
                 if (resUnionTrue && resUnionFalse && !resUnionTrue.error && !resUnionFalse.error) {
-                    if (isSimilar(baseContent, resUnionTrue.content) && !isSimilar(resUnionTrue.content, resUnionFalse.content)) {
+                    if (this.isResponseSimilar(baseContent, resUnionTrue.content) && !this.isResponseSimilar(resUnionTrue.content, resUnionFalse.content)) {
                         this.logVulnerability(
                             'SQL Injection',
                             request,
@@ -99,7 +91,7 @@ export default class ModSql extends Attack {
                 const resBoolFalse = await sendMutated(boolFalse);
 
                 if (resBoolTrue && resBoolFalse && !resBoolTrue.error && !resBoolFalse.error) {
-                    if (isSimilar(baseContent, resBoolTrue.content) && !isSimilar(resBoolTrue.content, resBoolFalse.content)) {
+                    if (this.isResponseSimilar(baseContent, resBoolTrue.content) && !this.isResponseSimilar(resBoolTrue.content, resBoolFalse.content)) {
                         this.logVulnerability(
                             'SQL Injection',
                             request,

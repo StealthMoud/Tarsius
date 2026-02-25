@@ -139,6 +139,21 @@ export class Attack {
         return parseTxtPayloads(filePath);
     }
 
+    // helper to compare responses with a length tolerance for dynamic content
+    isResponseSimilar(contentA, contentB, threshold = 0.05) {
+        if (contentA === undefined || contentB === undefined) return false;
+        if (contentA === null || contentB === null) return false;
+
+        const lenA = contentA.length;
+        const lenB = contentB.length;
+
+        if (lenA === 0 && lenB === 0) return true;
+
+        const diff = Math.abs(lenA - lenB);
+        const ratio = diff / Math.max(lenA, lenB, 1);
+        return ratio < threshold;
+    }
+
     // send all mutatins concurently and check each respons
     // checkFn = (response, mutation) => vuln info string or null
     // stops early when a vuln is found for a paramter

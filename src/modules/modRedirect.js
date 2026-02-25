@@ -1,4 +1,4 @@
-// open redirect detecton
+// open redirect detection with host validation
 
 import { Attack, Mutator } from './attack.js';
 
@@ -31,18 +31,45 @@ export default class ModRedirect extends Attack {
                 const response = await this.crawler.send(mutation.request);
                 if (!response) continue;
 
-                // check if we got redirected to our evil domain
+                // 1. Check if we got an actual redirect status code
                 if (response.isRedirect) {
                     const location = response.redirectionUrl || '';
-                    if (location.includes('evil.com')) {
-                        this.logVulnerability(
-                            'Open Redirect',
-                            mutation.request,
-                            `Open redirect via parameter ${mutation.parameter}`,
-                            mutation.parameter,
-                            'WSTG-CLNT-04'
-                        );
-                        break;
+
+                    // 2. Stricter Validation: Check if the redirect is actually going to evil.com
+                    // We parse the URL to ensure evil.com is the actual hostname
+                    try {
+                        let targetUrl;
+                        if (location.startsWith('//')) {
+                            targetUrl = new URL('http:' + location);
+                        } else if (location.startsWith('/')) {
+                            // Local redirect, not an open redirect unless it's a bypass like /\ or //
+                            continue;
+                        } else {
+                            targetUrl = new URL(location);
+                        }
+
+                        if (targetUrl.hostname === 'evil.com' || targetUrl.hostname.endsWith('.evil.com')) {
+                            this.logVulnerability(
+                                'Open Redirect',
+                                mutation.request,
+                                `Open redirect confirmed to ${targetUrl.hostname} via parameter ${mutation.parameter}`,
+                                mutation.parameter,
+                                'WSTG-CLNT-04'
+                            );
+                            break;
+                        }
+                    } catch {
+                        // If it's not a valid URL, fallback to partial check but with defensive boundaries
+                        if (location.includes('://evil.com') || location.startsWith('//evil.com')) {
+                            this.logVulnerability(
+                                'Open Redirect',
+                                mutation.request,
+                                `Open redirect potential via parameter ${mutation.parameter} (malformed location: ${location})`,
+                                mutation.parameter,
+                                'WSTG-CLNT-04'
+                            );
+                            break;
+                        }
                     }
                 }
             } catch {
