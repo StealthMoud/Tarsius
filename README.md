@@ -3,7 +3,7 @@
 **Author:** stealthmoud
 
 ## Description
-Tarsius is a black box web vulnerability scanner built with Node.js. It crawls websites, discovers pages and forms, then tests them for security flaws like SQL Injection, XSS, command execution, and more.
+Tarsius is a black box web vulnerability scanner built with Node.js. It crawls websites, discovers pages and forms, then tests them for security flaws like SQL Injection, XSS, command execution, and more. Recently updated with advanced double-verification heuristics to actively reduce false positives from dynamic content and WAFs.
 
 ## Requirements
 - **Node.js** 18.0.0 or higher
@@ -19,9 +19,17 @@ npm install
 
 ## Usage
 
-```bash
-node bin/tarsius -u <target_url> [options]
-```
+### Local Testing Environment (VulnApp)
+Tarsius comes with a modern, deliberately vulnerable Node.js application called **VulnApp** explicitly designed to exercise all detection modules.
+
+1. Start the VulnApp locally (requires Docker):
+   ```bash
+   docker compose -f tests/vulnapp/docker-compose.yml up -d
+   ```
+2. Scan the VulnApp:
+   ```bash
+   node bin/tarsius -u http://127.0.0.1:3000
+   ```
 
 ### Quick Examples
 
