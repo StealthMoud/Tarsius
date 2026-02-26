@@ -9,15 +9,28 @@ Tarsius is a black box web vulnerability scanner built with Node.js. It crawls w
 - **Node.js** 18.0.0 or higher
 - **npm** (comes with Node.js)
 
-## Installation
+## Installation & Usage (Recommended)
+
+The easiest and most reliable way to run Tarsius is via Docker. This ensures all external dependencies (like ProjectDiscovery's Nuclei) are built-in and ready to augment your scans.
 
 ```bash
-git clone https://github.com/StealthMoud/Tarsius.git
-cd Tarsius
-npm install
+# Pull the latest image (or build it locally)
+docker build -t stealthmoud/tarsius .
+
+# Run a scan against a target
+docker run --rm -it stealthmoud/tarsius -u http://target.com
 ```
 
-## Usage
+### Manual Installation (Node.js)
+If you prefer to run Tarsius directly on your host machine without Docker:
+
+```bash
+git clone https://github.com/stealthmoud/tarsius.git
+cd tarsius
+npm install --omit=dev  # Install only production dependencies
+node bin/tarsius -u http://target.com
+```
+*(Note: If you run Tarsius manually, the external engine orchestration flag `--external` requires `nuclei` to be installed in your system PATH).*
 
 ### Local Testing Environment (VulnApp)
 Tarsius comes with a modern, deliberately vulnerable Node.js application called **VulnApp** explicitly designed to exercise all detection modules.
@@ -134,14 +147,14 @@ All modules are run by default unless you explicitly restrict them using the `-m
 
 ### External Tool Orchestration (Opt-In)
 
-If you have Docker installed, Tarsius can orchestrate powerful external engines to expand its vulnerability coverage. To enable this, simply attach the `--external` flag.
+If you run Tarsius via its Docker image, it comes pre-packaged with external security tools that can dramatically expand vulnerability coverage. To enable them, simply attach the `--external` flag.
 
 ```bash
-node bin/tarsius -u http://target.com --external
+docker run --rm -it stealthmoud/tarsius -u http://target.com --external
 ```
 
 **Currently Supported External Engines:**
-- **Nuclei**: Automatically spawns `projectdiscovery/nuclei:latest`, targeting the scraped host data and seamlessly merges its CVE findings directly into the finalized Tarsius report.
+- **Nuclei**: Automatically executes the built-in `nuclei` binary against the scraped host data and seamlessly merges its CVE findings directly into the finalized Tarsius report.
 
 ## Project Structure
 

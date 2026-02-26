@@ -38,24 +38,22 @@ export default class ModNuclei extends Attack {
 
         for (const target of uniqueTargets) {
             if (this._isTimeUp()) break;
-            await this._runNucleiDocker(target, requests[0]); // pass the first request object just for tracking context
+            await this._runNucleiNative(target, requests[0]); // pass the first request object just for tracking context
         }
     }
 
-    _runNucleiDocker(targetUrl, contextRequest) {
+    _runNucleiNative(targetUrl, contextRequest) {
         return new Promise((resolve) => {
-            logVerbose(`Running Nuclei against ${targetUrl} via Docker...`);
+            logVerbose(`Running native Nuclei against ${targetUrl}...`);
 
-            // `docker run --rm projectdiscovery/nuclei:latest -u <target> -jsonl -silent`
+            // `nuclei -u <target> -jsonl -silent`
             const args = [
-                'run', '--rm',
-                'projectdiscovery/nuclei:latest',
                 '-u', targetUrl,
                 '-jsonl',    // JSON Lines output for easy streaming parse
                 '-silent'    // Only output findings, no banners
             ];
 
-            const child = spawn('docker', args);
+            const child = spawn('nuclei', args);
 
             let buffer = '';
 
@@ -80,13 +78,13 @@ export default class ModNuclei extends Attack {
                     this._processFinding(buffer.trim(), contextRequest);
                 }
                 if (code !== 0) {
-                    logYellow(`[*] [${this.moduleName}] Docker exited with code ${code}. (Is Docker running?)`);
+                    logYellow(`[*] [${this.moduleName}] Nuclei exited with code ${code}.`);
                 }
                 resolve();
             });
 
             child.on('error', (err) => {
-                logYellow(`[*] [${this.moduleName}] Failed to spawn Docker: ${err.message}. Ensure Docker is installed and running.`);
+                logYellow(`[*] [${this.moduleName}] Failed to spawn Nuclei: ${err.message}. Is it installed? (Run Tarsius via Docker for built-in support)`);
                 resolve();
             });
         });
