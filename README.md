@@ -154,7 +154,11 @@ docker run --rm -it ghcr.io/stealthmoud/tarsius -u http://target.com --external
 ```
 
 **Currently Supported External Engines:**
-- **Nuclei**: Automatically executes the built-in `nuclei` binary against the scraped host data and seamlessly merges its CVE findings directly into the finalized Tarsius report.
+1. **[Nuclei](https://github.com/projectdiscovery/nuclei)**: ProjectDiscovery's blazing-fast template-based vulnerability, misconfiguration, and CVE scanner. Tarsius will parse its entire NDJSON stream and categorize everything intelligently.
+2. **[WPScan](https://wpscan.com/)**: The industry standard WordPress security scanner. Tarsius uses heuristic detection to intelligently identify WordPress targets and automatically spawns the native Ruby scanner to identify vulnerable plugins, themes, and WP Core CVEs.
+3. **[JoomScan](https://github.com/OWASP/joomscan)**: The OWASP standard for Joomla CMS vulnerability detection. Tarsius heuristic detection ensures this Perl-based scanner is only executed when a Joomla target is correctly identified.
+
+*(Note: These tools are native to the `ghcr.io/stealthmoud/tarsius` Alpine image. Bypassing the Docker container will cause the `--external` flag to fail unless you manually place these exact binaries into your environment path).*
 
 ## Project Structure
 

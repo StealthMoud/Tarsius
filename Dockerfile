@@ -4,8 +4,30 @@ FROM projectdiscovery/nuclei:latest AS nuclei-builder
 # Stage 2: Create the Tarsius Node.js environment
 FROM node:20-alpine
 
-# Install necessary Alpine packages for networking/execution
-RUN apk add --no-cache bash curl ca-certificates
+# Install necessary Alpine packages for networking, execution, and external tool dependencies
+RUN apk add --no-cache \
+    bash \
+    curl \
+    ca-certificates \
+    ruby \
+    ruby-dev \
+    build-base \
+    libffi-dev \
+    zlib-dev \
+    libxml2-dev \
+    libxslt-dev \
+    perl \
+    perl-doc \
+    perl-libwww \
+    git
+
+# Install WPScan (Ruby)
+RUN gem install wpscan
+
+# Install JoomScan (Perl)
+WORKDIR /opt
+RUN git clone https://github.com/OWASP/joomscan.git && \
+    chmod +x /opt/joomscan/joomscan.pl
 
 # Copy Nuclei binary from Stage 1 into the system path
 COPY --from=nuclei-builder /usr/local/bin/nuclei /usr/local/bin/nuclei

@@ -32,11 +32,13 @@ const MODULE_MAP = {
     'permanentxss': () => import('./modPermanentxss.js'),
     'takeover': () => import('./modTakeover.js'),
     'nuclei': () => import('./modNuclei.js'), // External Docker Tool
+    'wpscan': () => import('./modWpscan.js'),   // External Docker Tool
+    'joomscan': () => import('./modJoomscan.js'), // External Docker Tool
 };
 
 // default modul list - used when no specifc modules are requestd
-// we explicitly exclude 'nuclei' from the default list so it only runs when enabled
-const DEFAULT_MODULES = Object.keys(MODULE_MAP).filter(mod => mod !== 'nuclei');
+// we explicitly exclude external tools from the default list so they only run when enabled
+const DEFAULT_MODULES = Object.keys(MODULE_MAP).filter(mod => !['nuclei', 'wpscan', 'joomscan'].includes(mod));
 
 export class ActiveScanner {
     // crawler = AsyncCrawler
@@ -55,9 +57,11 @@ export class ActiveScanner {
         const { pMap } = await import('../utils/concurrency.js');
         let modulesToRun = moduleNames || DEFAULT_MODULES;
 
-        // If external tools are enabled, safely add nuclei if it isn't already requested
-        if (this.options.enableExternalTools && !modulesToRun.includes('nuclei')) {
-            modulesToRun = [...modulesToRun, 'nuclei'];
+        // If external tools are enabled, safely add them if they aren't already requested
+        if (this.options.enableExternalTools) {
+            if (!modulesToRun.includes('nuclei')) modulesToRun.push('nuclei');
+            if (!modulesToRun.includes('wpscan')) modulesToRun.push('wpscan');
+            if (!modulesToRun.includes('joomscan')) modulesToRun.push('joomscan');
         }
         let totalVulns = 0;
 
