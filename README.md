@@ -18,7 +18,7 @@ The easiest and most reliable way to run Tarsius is via Docker. This ensures all
 docker build -t stealthmoud/tarsius .
 
 # Run a scan against a target
-docker run --rm -it stealthmoud/tarsius -u http://target.com
+docker run --rm -it ghcr.io/stealthmoud/tarsius -u http://target.com
 ```
 
 ### Manual Installation (Node.js)
@@ -150,7 +150,7 @@ All modules are run by default unless you explicitly restrict them using the `-m
 If you run Tarsius via its Docker image, it comes pre-packaged with external security tools that can dramatically expand vulnerability coverage. To enable them, simply attach the `--external` flag.
 
 ```bash
-docker run --rm -it stealthmoud/tarsius -u http://target.com --external
+docker run --rm -it ghcr.io/stealthmoud/tarsius -u http://target.com --external
 ```
 
 **Currently Supported External Engines:**
