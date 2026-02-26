@@ -81,3 +81,4 @@ An educational tool from Google created to teach web application security.
 2. **Verbosity**: Add `-v 1` for live feedback during the scan.
 3. **Module Selection**: Use `-m xss,sql` to pick specific modules or omit for defaults.
 4. **Timeout**: Increase with `-t 15` if the target is slow.
+5. **CMS / Advanced Scanning**: Always run via Docker with `--external` to ensure WPScan, JoomScan, and Nuclei are actively involved in the penetration test.

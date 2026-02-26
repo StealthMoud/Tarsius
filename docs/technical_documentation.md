@@ -16,6 +16,7 @@ Tarsius follows a modular architecture built on Node.js.
 - **Crawler (`network/crawler.js`, `network/explorer.js`)**: A web spider that discovers URLs and forms using BFS traversal. Parses HTML with Cheerio.
 - **Attack Layer (`attacks/`)**: Contains the vulnerability detection logic.
   - **ActiveScanner**: Loads modules that inject payloads into discovered targets.
+  - **ExternalOrchestrator**: Integrates containerized Go/Ruby/Perl scanners (Nuclei, WPScan, JoomScan).
   - **PassiveScanner**: Analyzes server responses (headers, cookies, body) without modifying requests.
 - **Reporting Layer (`reports/`)**: Generates reports in HTML, JSON, CSV, and plain text formats.
 
@@ -37,6 +38,12 @@ For every parameter found (GET, POST), Tarsius uses the **`Mutator`** class to g
 1. **Payload Selection**: Based on the module type, it selects specialized payloads from `data/attacks/`.
 2. **Injection**: Each parameter is tested individually with each payload.
 3. **Verification**: It analyzes the server's response code, headers, and body to confirm if the injection was successful.
+
+### Phase 2.5: External Integration (Opt-In)
+If launched with `--external` via Docker, Tarsius concurrently executes embedded vulnerability engines:
+- Generates targeted Nuclei templates on the fly.
+- Monitors site signatures for WordPress/Joomla to selectively fire WPScan/JoomScan.
+- Parses disparate JSON/NDJSON outputs back into the unified Tarsius reporting engine.
 
 ### Phase 3: Reporting
 Findings are persisted in a local SQLite database during the scan. Once complete, the reporting engine transforms these findings into a structured document.
@@ -72,6 +79,7 @@ Tarsius is equipped with **24 attack modules**, including:
   - **Insecure Headers**: Missing HSTS, CSP, X-Frame-Options, etc.
   - **SSL/TLS**: Certificate expiry, self-signed certs.
   - **Shellshock / Log4Shell / Spring4Shell**: High-impact CVE detection.
+  - **CMS Scanners**: Integrated WPScan and JoomScan (WordPress/Joomla) via Docker container.
 
 ---
 
