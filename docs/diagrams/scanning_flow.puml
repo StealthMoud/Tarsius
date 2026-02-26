@@ -1,39 +1,64 @@
 @startuml scanning_flow
+!theme plain
 autonumber
 
 actor User
-participant "Tarsius Engine" as Engine
+participant "Tarsius CLI" as CLI
 participant "Async Crawler" as Crawler
-participant "Scanner Subsystem" as Scanner
+participant "Scanner Engine" as Scanner
+participant "External Engines" as External
 database "SQLite Store" as DB
 participant "Report Engine" as Reporter
 
-User -> Engine : Start Scan (URL)
-activate Engine
+User -> CLI : Run Scan (e.g. `docker run ... --external`)
+activate CLI
 
-Engine -> Crawler : Explore (depth/headless)
+CLI -> Crawler : Initialize Crawl (Target URL, Depth)
 activate Crawler
-Crawler -> Crawler : Parse HTML/JS
-Crawler -> Engine : List of Targets
-deactivate Crawler
 
-loop "For each Target"
-    Engine -> Scanner : Attack (XSS, SQLi, etc)
-    activate Scanner
-    Scanner -> Scanner : Mutate Parameters
-    Scanner -> DB : Save Vulnerability
-    activate DB
-    DB --> Scanner : Persisted
-    deactivate DB
-    Scanner -> Engine : Task Complete
-    deactivate Scanner
+loop "For each Discovered URL"
+    Crawler -> Crawler : Parse HTML/JS (Find Links/Forms/Assets)
+    Crawler -> Crawler : Map Architecture (Detect CMS, Frameworks)
 end
 
-Engine -> Reporter : Generate Professional Report
+Crawler -> CLI : Return Mapped Scope & Target List
+deactivate Crawler
+
+CLI -> Scanner : Begin Attack Phase
+activate Scanner
+
+par "Native Node.js Attacks (Concurrent)"
+    loop "Over all Targets (Threads: 16)"
+        Scanner -> Scanner : Mutate Parameters (SQLi, XSS, SSRF...)
+        Scanner -> DB : Log Identified Vulnerability
+    end
+else "External Tool Orchestration (if --external enabled)"
+    activate External
+    Scanner -> External : Trigger ModNuclei
+    External -> DB : Stream NDJSON CVE Findings
+    
+    alt "If WordPress Detected"
+        Scanner -> External : Trigger ModWpscan
+        External -> External : Spawn Native Ruby WPScan
+        External -> DB : Parse & Save JSON Findings
+    end
+    
+    alt "If Joomla Detected"
+        Scanner -> External : Trigger ModJoomscan
+        External -> External : Spawn Native Perl JoomScan
+        External -> DB : Parse & Save ASCII Findings
+    end
+    deactivate External
+end
+
+Scanner -> CLI : Attack Phase Complete
+deactivate Scanner
+
+CLI -> Reporter : Generate Professional Report
 activate Reporter
-DB -> Reporter : Fetch Findings
-Reporter -> User : HTML/JSON Output
+DB -> Reporter : Aggregate All Findings
+Reporter -> User : Output (HTML/PDF/JSON)
 deactivate Reporter
 
-deactivate Engine
+deactivate CLI
 @enduml

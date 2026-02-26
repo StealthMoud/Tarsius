@@ -1,23 +1,54 @@
 @startuml architecture
-package "Tarsius Web Scanner" {
-    [CLI / User Input] as cli
-    [Tarsius Controller] as engine
-    [Async Crawler] as crawler
-    [Attack Modules] as scanner
-    database "SQLite Session" as db
+!theme plain
+skinparam componentStyle rectangle
+
+package "Tarsius Ecosystem (Docker Container)" {
+    [CLI Orchestrator] as cli
+    [Main Engine] as engine
+    
+    package "Discovery Subsystem" {
+        [Async Crawler] as crawler
+        [Scope Manager] as scope
+    }
+
+    package "Attack Engine (Native)" {
+        [SQLi / XSS / SSRF / etc..] as native_scanner
+        database "SQLite DB" as db
+    }
+
+    package "External Scanners (Wrapped)" {
+        [ModNuclei (Go)] as nuclei
+        [ModWpscan (Ruby)] as wpscan
+        [ModJoomscan (Perl)] as joomscan
+    }
+    
     [Report Generator] as reporter
 }
 
-cloud "Target Website" as web
+cloud "Target Application" as web
 
-cli --> engine : Command / Args
+cli --> engine : Parse Args (e.g. --external)
 engine --> crawler : Discovery Config
-crawler <--> web : HTTP/JS Crawling
-crawler --> engine : Found URLs / Forms
-engine --> scanner : Attack Targets
-scanner <--> web : Injection / Payloads
-scanner --> db : Findings / State
-engine --> reporter : Generate Report
-db --> reporter : Findings Data
-reporter --> [Final Report] : Final Output
+crawler <--> web : HTTP Crawling & JS parsing
+crawler --> scope : Filter Allowed URLs
+scope --> engine : Target Endpoints
+
+engine --> native_scanner : Internal Scan Tasks
+native_scanner <--> web : Exploit Payloads
+
+engine --> nuclei : Run Nuclei Templates
+nuclei <--> web : Send Requests
+engine --> wpscan : [If WordPress] Run WPScan 
+wpscan <--> web : Send Requests
+engine --> joomscan : [If Joomla] Run JoomScan
+joomscan <--> web : Send Requests
+
+native_scanner --> db : Findings / Status
+nuclei --> db : Extracted NDJSON Findings
+wpscan --> db : Extracted JSON Findings
+joomscan --> db : Extracted Text Findings
+
+engine --> reporter : Generate Final Output
+db --> reporter : Unified Findings List
+reporter --> [Report File (PDF/HTML/JSON)] : Export
 @enduml
