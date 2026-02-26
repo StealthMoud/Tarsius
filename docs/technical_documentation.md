@@ -43,7 +43,15 @@ Findings are persisted in a local SQLite database during the scan. Once complete
 
 ---
 
-## 3. Scope of Detection (Capabilities)
+## 3. False Positive Mitigation Heuristics
+A major focus of Tarsius is reducing "noise" or false positives common in classic scanners:
+1. **SSRF Padding Verification**: To avoid mistaking reflected input for SSRF (e.g., search functions), Tarsius generates an invalid domain (`http://a.invalid/`) and pads it to the exact length of the attack payload. If both payloads produce a highly similar response, it's flagged as a reflection anomaly, not a true SSRF.
+2. **SQLi Logical Double-Check**: Boolean-based blind SQLi detection is notoriously noisy. Tarsius implements a two-stage verification: if `AND 1=1` / `AND 1=2` triggers an anomaly, it immediately verifies the finding with `AND 2=2` / `AND 2=3`. A finding is only logged if both logical sets yield consistent anomalies.
+3. **Status Code Drift Prevention**: Any vulnerability inferred via response similarity (like blind SQLi or time-based SQLi) is strictly discarded if the "True" case response returns a different HTTP status code than the original baseline request (indicating a generic server error rather than true injection).
+
+---
+
+## 4. Scope of Detection (Capabilities)
 
 Tarsius is equipped with **24 attack modules**, including:
 
@@ -55,6 +63,7 @@ Tarsius is equipped with **24 attack modules**, including:
   - **LDAP Injection**: LDAP query manipulation.
 
 - **Configuration & Logic**:
+  - **Unrestricted File Upload**: Detection and live verification of dangerous file uploads.
   - **CRLF Injection**: HTTP response splitting.
   - **File Disclosure**: Path traversal and backup file discovery.
   - **SSRF**: Server-side request forgery.
