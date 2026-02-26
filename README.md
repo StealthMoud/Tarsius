@@ -103,12 +103,14 @@ node bin/tarsius -u http://target.com -C "PHPSESSID=abc123"
 
 ## Attack Modules
 
+All modules are run by default unless you explicitly restrict them using the `-m` flag.
+
 | Module | Description | Default |
 |--------|-------------|---------|
 | `xss` | Reflected cross-site scripting | yes |
 | `permanentxss` | Stored cross-site scripting | yes |
 | `sql` | SQL injection (error-based) | yes |
-| `timesql` | Blind time-based SQL injection | |
+| `timesql` | Blind time-based SQL injection | yes |
 | `exec` | OS command injection | yes |
 | `file` | Path traversal / file inclusion | yes |
 | `ssrf` | Server-side request forgery | yes |
@@ -117,18 +119,18 @@ node bin/tarsius -u http://target.com -C "PHPSESSID=abc123"
 | `ssl` | SSL/TLS certificate issues | yes |
 | `csrf` | Cross-site request forgery | yes |
 | `crlf` | CRLF header injection | yes |
-| `xxe` | XML external entity injection | |
+| `xxe` | XML external entity injection | yes |
 | `backup` | Backup file discovery | yes |
-| `shellshock` | Shellshock (CVE-2014-6271) | |
-| `log4shell` | Log4Shell (CVE-2021-44228) | |
-| `spring4shell` | Spring4Shell (CVE-2022-22965) | |
-| `nikto` | Known dangerous files and scripts | |
-| `buster` | Directory brute force | |
-| `brute_login_form` | Weak credential testing | |
-| `htaccess` | Access control bypass | |
-| `methods` | Uncommon HTTP methods | |
-| `ldap` | LDAP injection | |
-| `takeover` | Subdomain takeover | |
+| `shellshock` | Shellshock (CVE-2014-6271) | yes |
+| `log4shell` | Log4Shell (CVE-2021-44228) | yes |
+| `spring4shell` | Spring4Shell (CVE-2022-22965) | yes |
+| `nikto` | Known dangerous files and scripts | yes |
+| `buster` | Directory brute force | yes |
+| `brute_login_form` | Weak credential testing | yes |
+| `htaccess` | Access control bypass | yes |
+| `methods` | Uncommon HTTP methods | yes |
+| `ldap` | LDAP injection | yes |
+| `takeover` | Subdomain takeover | yes |
 
 ## Project Structure
 

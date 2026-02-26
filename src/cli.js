@@ -216,36 +216,35 @@ export async function tarsiusMain() {
 // list all availble attack modles
 async function listModules() {
     const modules = [
-        { name: 'backup', desc: 'find backup files left on the web server.', isDefault: true },
+        { name: 'backup', desc: 'find backup files left on the web server.' },
         { name: 'brute_login_form', desc: 'try common weak credentails on login forms.' },
         { name: 'buster', desc: 'brute force paths to find hidden files.' },
-        { name: 'crlf', desc: 'detect carriage return line feed injecton.', isDefault: true },
-        { name: 'csrf', desc: 'detect forms missing csrf protectons.', isDefault: true },
-        { name: 'exec', desc: 'detect comand injection vulnerabiltys.', isDefault: true },
-        { name: 'file', desc: 'detect path traversal and file incluson.', isDefault: true },
+        { name: 'crlf', desc: 'detect carriage return line feed injecton.' },
+        { name: 'csrf', desc: 'detect forms missing csrf protectons.' },
+        { name: 'exec', desc: 'detect comand injection vulnerabiltys.' },
+        { name: 'file', desc: 'detect path traversal and file incluson.' },
         { name: 'htaccess', desc: 'attempt to bypass htaccess restrictons.' },
         { name: 'ldap', desc: 'detect ldap injecton vulnerabiltys.' },
         { name: 'log4shell', desc: 'detect the log4shell vulnerabilty (CVE-2021-44228).' },
         { name: 'methods', desc: 'detect uncomon http methods enabled.' },
         { name: 'nikto', desc: 'test for known dangerus files and scripts.' },
-        { name: 'permanentxss', desc: 'detect stored xss vulnerabiltys.', isDefault: true },
-        { name: 'redirect', desc: 'detect open redirect vulnerabiltys.', isDefault: true },
+        { name: 'permanentxss', desc: 'detect stored xss vulnerabiltys.' },
+        { name: 'redirect', desc: 'detect open redirect vulnerabiltys.' },
         { name: 'shellshock', desc: 'detect shellshock vulnerabilty (CVE-2014-6271).' },
         { name: 'spring4shell', desc: 'detect spring4shell vulnerabilty (CVE-2022-22965).' },
-        { name: 'sql', desc: 'find sql injecton using error-based detecton.', isDefault: true },
-        { name: 'ssl', desc: 'evaluate ssl/tls certifcate security.', isDefault: true },
-        { name: 'ssrf', desc: 'detect server side request forgry.', isDefault: true },
+        { name: 'sql', desc: 'find sql injecton using error-based detecton.' },
+        { name: 'ssl', desc: 'evaluate ssl/tls certifcate security.' },
+        { name: 'ssrf', desc: 'detect server side request forgry.' },
         { name: 'takeover', desc: 'detect subdomin takeover vulnerabiltys.' },
         { name: 'timesql', desc: 'detect blind time-based sql injecton.' },
-        { name: 'upload', desc: 'detect unresticted file upload.', isDefault: true },
-        { name: 'xss', desc: 'detect reflected xss vulnerabiltys.', isDefault: true },
+        { name: 'upload', desc: 'detect unresticted file upload.' },
+        { name: 'xss', desc: 'detect reflected xss vulnerabiltys.' },
         { name: 'xxe', desc: 'detect xml external entity injecton.' },
     ];
 
-    console.log('[*] Available modules:');
+    console.log('[*] Available modules (all modules are run by default unless specified with -m):');
     for (const mod of modules) {
-        const suffix = mod.isDefault ? ' (default)' : '';
-        console.log(`\t${mod.name}${suffix}`);
+        console.log(`\t${mod.name}`);
         console.log(`\t\t${mod.desc}\n`);
     }
 }
