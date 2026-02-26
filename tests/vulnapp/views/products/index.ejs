@@ -2,6 +2,14 @@
 
     <h2>product catalog</h2>
 
+    <div class="card" style="margin-bottom: 20px;">
+        <form action="/products" method="get" style="display: flex; gap: 10px;">
+            <input type="text" name="search" placeholder="Search products..." value="<%= search || '' %>"
+                style="flex-grow: 1; padding: 5px;">
+            <button type="submit" style="padding: 5px 15px;">Search</button>
+        </form>
+    </div>
+
     <% if (search) { %>
         <p class="vuln-marker">
             <span class="vuln-badge">Vulnerable to Reflected XSS & Union-Based SQLi</span><br />
