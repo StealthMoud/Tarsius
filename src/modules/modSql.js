@@ -64,22 +64,39 @@ export default class ModSql extends Attack {
 
             for (const prefix of prefixes) {
                 // 1. Union-Based / Order By Inference
+                // We test if "order by 1" (likely valid) is similar to baseline
+                // AND "order by 1000" (likely invalid) is different.
                 const unionTrue = `${prefix} order by 1#`;
-                const unionFalse = `${prefix} order by 1000#`;
+                const unionFalse = `${prefix} order by 10000#`;
 
                 const resUnionTrue = await sendMutated(unionTrue);
                 const resUnionFalse = await sendMutated(unionFalse);
 
                 if (resUnionTrue && resUnionFalse && !resUnionTrue.error && !resUnionFalse.error) {
-                    if (this.isResponseSimilar(baseContent, resUnionTrue.content) && !this.isResponseSimilar(resUnionTrue.content, resUnionFalse.content)) {
-                        this.logVulnerability(
-                            'SQL Injection',
-                            request,
-                            `Union-Based SQLi (Order By inference) found via parameter ${paramName}`,
-                            paramName,
-                            'WSTG-INPV-05'
-                        );
-                        return true;
+                    // Stricter check: 
+                    // 1. True case must have same status code as base
+                    // 2. True case must be similar to base
+                    // 3. False case must be DIFFERENT from true case
+                    if (resUnionTrue.status === defaultResponse.status &&
+                        this.isResponseSimilar(baseContent, resUnionTrue.content) &&
+                        !this.isResponseSimilar(resUnionTrue.content, resUnionFalse.content)) {
+
+                        // SECONDARY VERIFICATION for Order By
+                        const unionTrue2 = `${prefix} order by 2#`;
+                        const resUnionTrue2 = await sendMutated(unionTrue2);
+                        if (resUnionTrue2 && !resUnionTrue2.error &&
+                            resUnionTrue2.status === defaultResponse.status &&
+                            this.isResponseSimilar(baseContent, resUnionTrue2.content)) {
+
+                            this.logVulnerability(
+                                'SQL Injection',
+                                request,
+                                `Union-Based SQLi (Order By inference) confirmed via parameter ${paramName}`,
+                                paramName,
+                                'WSTG-INPV-05'
+                            );
+                            return true;
+                        }
                     }
                 }
 
@@ -91,15 +108,31 @@ export default class ModSql extends Attack {
                 const resBoolFalse = await sendMutated(boolFalse);
 
                 if (resBoolTrue && resBoolFalse && !resBoolTrue.error && !resBoolFalse.error) {
-                    if (this.isResponseSimilar(baseContent, resBoolTrue.content) && !this.isResponseSimilar(resBoolTrue.content, resBoolFalse.content)) {
-                        this.logVulnerability(
-                            'SQL Injection',
-                            request,
-                            `Boolean-Based Blind SQLi found via parameter ${paramName}`,
-                            paramName,
-                            'WSTG-INPV-05'
-                        );
-                        return true;
+                    if (resBoolTrue.status === defaultResponse.status &&
+                        this.isResponseSimilar(baseContent, resBoolTrue.content) &&
+                        !this.isResponseSimilar(resBoolTrue.content, resBoolFalse.content)) {
+
+                        // DOUBLE VERIFICATION for Boolean Blind
+                        // If 1=1/1=2 worked, try 2=2/2=3 to be absolutely sure it's not noise
+                        const boolTrue2 = `${prefix} and 2=2#`;
+                        const boolFalse2 = `${prefix} and 2=3#`;
+                        const resBT2 = await sendMutated(boolTrue2);
+                        const resBF2 = await sendMutated(boolFalse2);
+
+                        if (resBT2 && resBF2 && !resBT2.error && !resBF2.error &&
+                            resBT2.status === defaultResponse.status &&
+                            this.isResponseSimilar(baseContent, resBT2.content) &&
+                            !this.isResponseSimilar(resBT2.content, resBF2.content)) {
+
+                            this.logVulnerability(
+                                'SQL Injection',
+                                request,
+                                `Boolean-Based Blind SQLi confirmed via parameter ${paramName}`,
+                                paramName,
+                                'WSTG-INPV-05'
+                            );
+                            return true;
+                        }
                     }
                 }
 

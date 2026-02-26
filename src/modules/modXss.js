@@ -27,6 +27,13 @@ export default class ModXss extends Attack {
 
             if (!isValidContext) return null;
 
+            // FALSE POSITIVE MITIGATION:
+            // many servers reflect the invalid path in a 404 page. 
+            // if we are testing a PATH_ parameter and get a 404, it's likely a false positive.
+            if (mutation.parameter.startsWith('PATH_') && response.status === 404) {
+                return null;
+            }
+
             // 2. Exact Payload Reflection Check
             if (response.content.includes(mutation.payload)) {
 
