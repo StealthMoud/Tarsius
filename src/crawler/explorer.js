@@ -3,6 +3,7 @@
 import { Request, makeAbsolute } from '../http/request.js';
 import { AsyncCrawler } from './crawler.js';
 import { Scope } from './scope.js';
+import { Html } from '../parsers/htmlParser.js';
 import { logVerbose, logGreen, logYellow } from '../utils/log.js';
 
 export class Explorer {
@@ -114,10 +115,19 @@ export class Explorer {
                 }
 
                 // extract forms too
-                const forms = this._extractForms(response.content, url);
+                const html = new Html(url, response.content);
+                const forms = html.getForms();
                 for (const form of forms) {
-                    if (!this._visited.has(form.url)) {
-                        this._queue.push(form);
+                    const req = new Request(form.action, {
+                        method: form.method,
+                        postParams: form.method === 'POST' ? form.inputs.filter(i => i.type !== 'file').map(i => [i.name, i.value]) : null,
+                        getParams: form.method === 'GET' ? form.inputs.map(i => [i.name, i.value]) : null,
+                        fileParams: form.inputs.filter(i => i.type === 'file').map(i => [i.name, 'tarsius_test.txt']),
+                        enctype: form.enctype,
+                        referer: url,
+                    });
+                    if (!this._visited.has(req.url)) {
+                        this._queue.push(req);
                     }
                 }
             }
@@ -126,8 +136,7 @@ export class Explorer {
         }
     }
 
-    // extract links from html content usng regex
-    // todo: replace with cherio for beter accuracy
+    // URL extraction via regex for speed (complemented by form extraction)
     _extractLinks(html, baseUrl) {
         const links = new Set();
         if (!html) return links;
@@ -153,68 +162,6 @@ export class Explorer {
         }
 
         return links;
-    }
-
-    // extract forms from html
-    // todo: replace with cherio parser for much beter accuracy
-    _extractForms(html, baseUrl) {
-        const forms = [];
-        if (!html) return forms;
-
-        // simple regex to find form actins
-        const formRegex = /<form[^>]*action\s*=\s*["']([^"']*)["'][^>]*>/gi;
-        const methodRegex = /method\s*=\s*["']([^"']*)["']/i;
-
-        let match;
-        while ((match = formRegex.exec(html)) !== null) {
-            const action = makeAbsolute(baseUrl, match[1]);
-            if (!action) continue;
-
-            const methodMatch = match[0].match(methodRegex);
-            const method = methodMatch ? methodMatch[1].toUpperCase() : 'GET';
-
-            // extract input fields
-            // this is a rough extraction, the real parser will do much beter
-            const postParams = [];
-            const fileParams = [];
-
-            // updated regex to capture type attributes and name attributes
-            const inputRegex = /<input[^>]+>/gi;
-            let inputMatch;
-
-            // search for inputs between this form and the next form or end of html
-            const formEndIdx = html.indexOf('</form>', match.index);
-            const formHtml = html.substring(match.index, formEndIdx > 0 ? formEndIdx : undefined);
-
-            while ((inputMatch = inputRegex.exec(formHtml)) !== null) {
-                const tagHtml = inputMatch[0];
-                const nameMatch = tagHtml.match(/name\s*=\s*["']([^"']*)["']/i);
-                if (!nameMatch) continue;
-
-                const typeMatch = tagHtml.match(/type\s*=\s*["']([^"']*)["']/i);
-                const valueMatch = tagHtml.match(/value\s*=\s*["']([^"']*)["']/i);
-
-                const name = nameMatch[1];
-                const value = valueMatch ? valueMatch[1] : '';
-                const type = typeMatch ? typeMatch[1].toLowerCase() : 'text';
-
-                if (type === 'file') {
-                    fileParams.push([name, 'mock_upload.txt']);
-                } else {
-                    postParams.push([name, value]);
-                }
-            }
-
-            forms.push(new Request(action, {
-                method,
-                postParams: method === 'POST' ? postParams : null,
-                getParams: method === 'GET' ? postParams : null,
-                fileParams: fileParams.length > 0 ? fileParams : null,
-                referer: baseUrl,
-            }));
-        }
-
-        return forms;
     }
 
     // check if a url is in our excuded list

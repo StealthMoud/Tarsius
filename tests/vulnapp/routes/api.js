@@ -9,7 +9,11 @@ const path = require('path');
 // configure multer for vulnerable unrestricted file upload
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../public/uploads/'))
+        const uploadPath = path.join(__dirname, '../public/uploads/');
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath)
     },
     filename: function (req, file, cb) {
         cb(null, file.originalname) // implicitly trusting user input
