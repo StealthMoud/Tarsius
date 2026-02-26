@@ -21,8 +21,8 @@ function createProgram() {
         .description(`Tarsius ${TARSIUS_VERSION}: Web application vulnerabilty scanner`)
         .version(TARSIUS_VERSION)
 
-        // target - the only requird option
-        .requiredOption('-u, --url <url>', 'target url to scan')
+        // target - the only requird option (checked manually later to allow list-modules to run)
+        .option('-u, --url <url>', 'target url to scan')
         .option('--data <data>', 'urlencoded data for post requsts')
         .option('--scope <scope>', 'scan scope (url, page, folder, domain)', 'domain')
 
@@ -98,7 +98,10 @@ export async function tarsiusMain() {
         return;
     }
 
-    // the url is requird, commmander handles this with requiredOption
+    if (!opts.url) {
+        console.error("error: required option '-u, --url <url>' not specified");
+        process.exit(1);
+    }
 
     try {
         // build the initial requst from the target url
