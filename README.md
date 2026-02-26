@@ -115,10 +115,10 @@ node bin/tarsius -u http://target.com -C "PHPSESSID=abc123"
 | `redirect` | Open redirect | yes |
 | `upload` | Unrestricted file upload | yes |
 | `ssl` | SSL/TLS certificate issues | yes |
-| `csrf` | Cross-site request forgery | |
-| `crlf` | CRLF header injection | |
+| `csrf` | Cross-site request forgery | yes |
+| `crlf` | CRLF header injection | yes |
 | `xxe` | XML external entity injection | |
-| `backup` | Backup file discovery | |
+| `backup` | Backup file discovery | yes |
 | `shellshock` | Shellshock (CVE-2014-6271) | |
 | `log4shell` | Log4Shell (CVE-2021-44228) | |
 | `spring4shell` | Spring4Shell (CVE-2022-22965) | |

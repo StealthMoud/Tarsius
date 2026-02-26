@@ -216,11 +216,11 @@ export async function tarsiusMain() {
 // list all availble attack modles
 async function listModules() {
     const modules = [
-        { name: 'backup', desc: 'find backup files left on the web server.' },
+        { name: 'backup', desc: 'find backup files left on the web server.', isDefault: true },
         { name: 'brute_login_form', desc: 'try common weak credentails on login forms.' },
         { name: 'buster', desc: 'brute force paths to find hidden files.' },
-        { name: 'crlf', desc: 'detect carriage return line feed injecton.' },
-        { name: 'csrf', desc: 'detect forms missing csrf protectons.' },
+        { name: 'crlf', desc: 'detect carriage return line feed injecton.', isDefault: true },
+        { name: 'csrf', desc: 'detect forms missing csrf protectons.', isDefault: true },
         { name: 'exec', desc: 'detect comand injection vulnerabiltys.', isDefault: true },
         { name: 'file', desc: 'detect path traversal and file incluson.', isDefault: true },
         { name: 'htaccess', desc: 'attempt to bypass htaccess restrictons.' },
