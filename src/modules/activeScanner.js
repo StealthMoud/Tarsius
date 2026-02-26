@@ -31,10 +31,12 @@ const MODULE_MAP = {
     'upload': () => import('./modUpload.js'),
     'permanentxss': () => import('./modPermanentxss.js'),
     'takeover': () => import('./modTakeover.js'),
+    'nuclei': () => import('./modNuclei.js'), // External Docker Tool
 };
 
 // default modul list - used when no specifc modules are requestd
-const DEFAULT_MODULES = Object.keys(MODULE_MAP);
+// we explicitly exclude 'nuclei' from the default list so it only runs when enabled
+const DEFAULT_MODULES = Object.keys(MODULE_MAP).filter(mod => mod !== 'nuclei');
 
 export class ActiveScanner {
     // crawler = AsyncCrawler
@@ -51,7 +53,12 @@ export class ActiveScanner {
     // run all the atack modules - now with inter-modul concurency!
     async run(requests, moduleNames = null) {
         const { pMap } = await import('../utils/concurrency.js');
-        const modulesToRun = moduleNames || DEFAULT_MODULES;
+        let modulesToRun = moduleNames || DEFAULT_MODULES;
+
+        // If external tools are enabled, safely add nuclei if it isn't already requested
+        if (this.options.enableExternalTools && !modulesToRun.includes('nuclei')) {
+            modulesToRun = [...modulesToRun, 'nuclei'];
+        }
         let totalVulns = 0;
 
         logYellow(`[*] Attacking ${requests.length} URLs with ${modulesToRun.length} modules (parallel execution)`);

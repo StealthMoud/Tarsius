@@ -29,6 +29,7 @@ function createProgram() {
         // modules
         .option('-m, --module <modules>', 'comma-separated list of moduls to run')
         .option('--list-modules', 'list tarsius attack moduls and exit')
+        .option('--external', 'enable external docker-based tools (e.g., nuclei)')
 
         // atack level
         .option('-l, --level <level>', 'set atack level (1 or 2)', '1')
@@ -164,6 +165,9 @@ export async function tarsiusMain() {
         // modules to run
         if (opts.module) {
             tarsius.setModules(opts.module);
+        }
+        if (opts.external) {
+            tarsius.enableExternalTools = true;
         }
 
         // extra starting urls

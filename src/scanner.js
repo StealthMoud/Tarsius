@@ -66,6 +66,9 @@ export class Tarsius {
         this.flushAttacks = false;
         this.flushSession = false;
 
+        // external tools
+        this.enableExternalTools = false;
+
         // scan results
         this._vulnerabilities = {};
         this._anomalies = {};
@@ -450,6 +453,7 @@ export class Tarsius {
             skippedParams: this._skippedParams,
             timeout: this.crawlerConfig.timeout,
             threads: this.threads,
+            enableExternalTools: this.enableExternalTools,
         };
 
         // run active atack modules

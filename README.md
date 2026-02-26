@@ -132,6 +132,17 @@ All modules are run by default unless you explicitly restrict them using the `-m
 | `ldap` | LDAP injection | yes |
 | `takeover` | Subdomain takeover | yes |
 
+### External Tool Orchestration (Opt-In)
+
+If you have Docker installed, Tarsius can orchestrate powerful external engines to expand its vulnerability coverage. To enable this, simply attach the `--external` flag.
+
+```bash
+node bin/tarsius -u http://target.com --external
+```
+
+**Currently Supported External Engines:**
+- **Nuclei**: Automatically spawns `projectdiscovery/nuclei:latest`, targeting the scraped host data and seamlessly merges its CVE findings directly into the finalized Tarsius report.
+
 ## Project Structure
 
 ```
