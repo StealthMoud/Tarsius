@@ -1,5 +1,4 @@
 @startuml architecture
-!theme plain
 skinparam componentStyle rectangle
 
 package "Tarsius Ecosystem (Docker Container)" {
@@ -12,7 +11,7 @@ package "Tarsius Ecosystem (Docker Container)" {
     }
 
     package "Attack Engine (Native)" {
-        [SQLi / XSS / SSRF / etc..] as native_scanner
+        ["SQLi / XSS / SSRF / etc.."] as native_scanner
         database "SQLite DB" as db
     }
 
@@ -38,7 +37,7 @@ native_scanner <--> web : Exploit Payloads
 
 engine --> nuclei : Run Nuclei Templates
 nuclei <--> web : Send Requests
-engine --> wpscan : [If WordPress] Run WPScan 
+engine --> wpscan : [If WordPress] Run WPScan
 wpscan <--> web : Send Requests
 engine --> joomscan : [If Joomla] Run JoomScan
 joomscan <--> web : Send Requests

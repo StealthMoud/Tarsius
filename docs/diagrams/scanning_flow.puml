@@ -1,5 +1,4 @@
 @startuml scanning_flow
-!theme plain
 autonumber
 
 actor User
