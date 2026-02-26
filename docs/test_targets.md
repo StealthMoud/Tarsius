@@ -2,7 +2,21 @@
 
 This document provides a collection of public websites that are intentionally designed with security vulnerabilities. These are safe and legal targets for testing the scanning capabilities of Tarsius.
 
-## 1. Acunetix Vulnerable Apps
+## 1. Local VulnApp (Recommended)
+Tarsius bundles a modern, deliberately vulnerable Node.js application explicitly designed to test its detection modules, including Upload, SSRF, XSS, and SQLi.
+
+1. Start the VulnApp locally (requires Docker):
+   ```bash
+   docker compose -f tests/vulnapp/docker-compose.yml up -d
+   ```
+2. Scan the VulnApp:
+   ```bash
+   tarsius -u http://127.0.0.1:3000 -o reports/vulnapp.html
+   ```
+
+---
+
+## 2. Acunetix Vulnerable Apps
 Maintained by Acunetix (now Invicti), these are classic targets for testing web scanners.
 
 - **PHP Lab (XSS, SQLi, etc.)**: [http://testphp.vulnweb.com](http://testphp.vulnweb.com)
@@ -16,7 +30,7 @@ tarsius -u http://testphp.vulnweb.com -o reports/testphp.html
 
 ---
 
-## 2. Altoro Mutual (Testfire)
+## 3. Altoro Mutual (Testfire)
 A simulated online banking site created by IBM to demonstrate web application vulnerabilities.
 
 - **URL**: [http://demo.testfire.net](http://demo.testfire.net)
@@ -28,7 +42,7 @@ tarsius -u http://demo.testfire.net -m sql,xss -o reports/testfire.html
 
 ---
 
-## 3. OWASP Juice Shop
+## 4. OWASP Juice Shop
 Probably the most modern and sophisticated "vulnerable by design" web application.
 
 - **URL (Public Demo)**: [https://demo.owasp-juice.shop](https://demo.owasp-juice.shop)
@@ -40,7 +54,7 @@ tarsius -u https://demo.owasp-juice.shop -o reports/juiceshop.html
 
 ---
 
-## 4. Hack Yourself First
+## 5. Hack Yourself First
 A target developed by Troy Hunt (creator of Have I Been Pwned) showing common real-world vulnerabilities.
 
 - **URL**: [https://hack-yourself-first.com](https://hack-yourself-first.com)
@@ -52,7 +66,7 @@ tarsius -u https://hack-yourself-first.com -m xss,sql -o reports/hackyourself.ht
 
 ---
 
-## 5. Google Gruyere
+## 6. Google Gruyere
 An educational tool from Google created to teach web application security.
 
 - **URL**: [https://google-gruyere.appspot.com](https://google-gruyere.appspot.com)
